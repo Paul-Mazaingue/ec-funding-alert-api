@@ -1,0 +1,215 @@
+{
+    "bool": {
+        "must": [
+            {
+                "bool": {
+                    "must": [
+                        {
+                            "terms": {
+                                "type": [
+                                    "1",
+                                    "2",
+                                    "8"
+                                ]
+                            }
+                        },
+                        {
+                            "terms": {
+                                "status": [
+                                    "31094501",
+                                    "31094502"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "bool": {
+                    "should": [
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "identifier",
+                                "phraseSlop": 0,
+                                "boost": 1100
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "keywords",
+                                "phraseSlop": 0,
+                                "boost": 1000
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "tags",
+                                "phraseSlop": 0,
+                                "boost": 950
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "typesOfAction",
+                                "phraseSlop": 1,
+                                "boost": 900
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "title",
+                                "phraseSlop": 1,
+                                "boost": 200
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "callTitle",
+                                "phraseSlop": 1,
+                                "boost": 150
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "projectAcronym",
+                                "phraseSlop": 1,
+                                "boost": 140
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "projectName",
+                                "phraseSlop": 1,
+                                "boost": 130
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "description",
+                                "phraseSlop": 2,
+                                "boost": 100
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "furtherInformation",
+                                "phraseSlop": 1,
+                                "boost": 90
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "missionDescription",
+                                "phraseSlop": 1,
+                                "boost": 80
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "missionDetails",
+                                "phraseSlop": 1,
+                                "boost": 75
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "destinationDescription",
+                                "phraseSlop": 1,
+                                "boost": 70
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "destinationDetails",
+                                "phraseSlop": 1,
+                                "boost": 65
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": "digital twin",
+                                "field": "duration",
+                                "phraseSlop": 1,
+                                "boost": 60
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 45,
+                                "cenTagsA": "TTG_00734563"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 11.885272,
+                                "cenTagsA": "TCM_00742083"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 11.8852625,
+                                "cenTagsA": "TTG_00724643"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 9.07321,
+                                "cenTagsA": "TTG_00793855"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 8.322773,
+                                "cenTagsA": "TTG_00818211"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 5.824881,
+                                "cenTagsA": "TTG_00732584"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 4.132393,
+                                "cenTagsA": "TTG_00738435"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 3.6465845,
+                                "cenTagsA": "TTL_00748768"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 3.5786319,
+                                "cenTagsA": "TTL_00725502"
+                            }
+                        },
+                        {
+                            "term": {
+                                "boost": 3.5786307,
+                                "cenTagsA": "TTG_00757064"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
