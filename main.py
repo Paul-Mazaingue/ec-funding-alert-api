@@ -45,7 +45,7 @@ def load_json(file_path, folder= None):
 
 
 def fetch_all_references(url, params):
-    all_refs = set()
+    all_refs = []
 
     totalResults = request_api(url, params).json().get("totalResults", 0)
 
@@ -69,8 +69,9 @@ def fetch_all_references(url, params):
 
         for result in results:
             ref = result.get("reference")
+            identifier = result.get("metadata", {}).get("identifier")
             if ref:
-                all_refs.add(ref)
+                all_refs.append({"reference": ref, "identifier": identifier})
     
     return all_refs
 
@@ -97,12 +98,15 @@ def has_new_results(previous_results, current_results):
 def compare_results(previous_results, current_results):
     if previous_results is None:
         return {
-            "new": list(current_results),
+            "new": current_results,
             "removed": []
         }
 
-    new_results = [item for item in current_results if item not in previous_results]
-    removed_results = [item for item in previous_results if item not in current_results]
+    previous_refs = {item["reference"] for item in previous_results}
+    current_refs = {item["reference"] for item in current_results}
+
+    new_results = [item for item in current_results if item["reference"] not in previous_refs]
+    removed_results = [item for item in previous_results if item["reference"] not in current_refs]
 
     return {
         "new": new_results,
@@ -122,16 +126,77 @@ def check_new_results(url, params, files):
     else:
         print("No new results.")
 
-    save_to_file("all_references.json", list(current_results), folder=DATA_DIR)
+    save_to_file("all_references.json", current_results, folder=DATA_DIR)
 
-def get_info_with_ref(ref, url, params):
-    params["reference"] = ref
-    response = request_api(url, params)
-    if response is None:
+def get_info_with_ref(identifier,ref, url, params):
+    # Charger le contenu de query.json
+    base_query = load_json("query.json", folder=CONFIG_DIR)
+    if base_query is None:
+        print("Erreur : query.json introuvable.")
         return None
-    return response.json()
+
+    # Ajouter un bloc à la clause "must"
+    if "bool" not in base_query:
+        base_query["bool"] = {}
+
+    if "must" not in base_query["bool"]:
+        base_query["bool"]["must"] = []
+
+    base_query["bool"]["must"].append({
+        "term": {
+            "identifier": identifier
+        }
+    })
+
+    # Ouverture manuelle des fichiers nécessaires
+    lang_file = open(f'{CONFIG_DIR}/languages.json', 'rb')
+    sort_file = open(f'{CONFIG_DIR}/sort.json', 'rb')
+
+    files = [
+        ('query', ('inline-query.json', json.dumps(base_query), 'application/json')),
+        ('languages', ('languages.json', lang_file, 'application/json')),
+        ('sort', ('sort.json', sort_file, 'application/json'))
+    ]
+
+    try:
+        response = requests.post(url, params=params, files=files)
+    finally:
+        lang_file.close()
+        sort_file.close()
+
+    if response.status_code != 200:
+        print(f"Erreur lors de la récupération : {response.status_code} - {response.text}")
+        return None
+
+    data = response.json()
+    results = data.get("results", [])
+    if not results:
+        print(f"Aucun résultat trouvé pour l'identifiant : {identifier}")
+        return None
+
+    
+    # Il faudra faire en sorte de récupérer le résultat correspondant à la reférence
+    result = None
+    for res in results:
+        print("essai")
+        if res.get("reference") == ref:
+            print("trouvé")
+            result = res
+            break
+
+
+    save_to_file("result.json", result, folder=DATA_DIR)
+
+    return {
+        "reference": result.get("reference"),
+        "title": result.get("title"),
+        "programme": result.get("summary"),
+        "startDate": result.get("url")
+    }
+
 
 if __name__ == "__main__":
+    
     url = "https://api.tech.ec.europa.eu/search-api/prod/rest/search"
 
     params = {
@@ -141,7 +206,18 @@ if __name__ == "__main__":
 
     files = build_files()
 
+    
+    """
+    
     while True:
         check_new_results(url, params, files)
         print("Waiting for 5 minutes before the next check...")
         time.sleep(300)  # Wait for 5 minutes (300 seconds)
+    """
+    
+    details = get_info_with_ref("SC5-23-2016-2017","31071371Coordinationandsupportaction1447113600000", url, params)
+    if details:
+        print("=== Détails de l'appel d'offre ===")
+        for k, v in details.items():
+            print(f"{k}: {v}")
+
