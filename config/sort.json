@@ -1,4 +1,4 @@
 {
     "order": "DESC",
-    "field": "relevance"
+    "field": "title"
 }  

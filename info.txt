@@ -3,3 +3,12 @@ https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/support/ap
 
 lien Loïc :
 https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/calls-for-proposals?order=DESC&pageNumber=1&pageSize=50&sortBy=relevance&keywords=digital%20twin&isExactMatch=true&status=31094501,31094502
+
+Status :  (Open, Close, Forthcoming) look like these: 31094501","31094502","31094503”
+
+Type : 
+- 1 = Direct calls for proposals (issued by the EU)
+- 2 = EU External Actions
+- 8 = Calls for funding in cascade (issued by funded projects)
+- 0 = tenders ?
+- 6 = funding ?
