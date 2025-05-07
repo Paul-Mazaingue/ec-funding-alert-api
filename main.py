@@ -3,6 +3,13 @@ import json
 import os
 import time
 
+# Sending email alerts
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+
+
 DATA_DIR = "data"
 CONFIG_DIR = "config"
 
@@ -121,8 +128,9 @@ def check_new_results(url, params, files):
     if has_new_results(previous_results, current_results):
         print("New results detected!")
         comparison = compare_results(previous_results, current_results)
-        print(f"New results: {comparison['new']}")
-        print(f"Removed results: {comparison['removed']}")
+        send_alert(comparison["new"], url, params)
+
+
     else:
         print("No new results.")
 
@@ -143,10 +151,15 @@ def get_info_with_ref(identifier,ref, url, params):
         base_query["bool"]["must"] = []
 
     base_query["bool"]["must"].append({
-        "term": {
-            "identifier": identifier
+        "text": {
+            "query": identifier[0],
+            "fields": ["identifier"],
+            "defaultOperator": "AND"
         }
     })
+
+    print("=== Query ===")
+    print(json.dumps(base_query, indent=2))
 
     # Ouverture manuelle des fichiers nécessaires
     lang_file = open(f'{CONFIG_DIR}/languages.json', 'rb')
@@ -184,15 +197,43 @@ def get_info_with_ref(identifier,ref, url, params):
             result = res
             break
 
-
-    save_to_file("result.json", result, folder=DATA_DIR)
-
     return {
         "reference": result.get("reference"),
         "title": result.get("title"),
         "programme": result.get("summary"),
         "startDate": result.get("url")
     }
+
+def send_alert(new_results, url, params):
+    # Récupération des informations sur les résultats
+    new_info = [get_info_with_ref(item["identifier"], item["reference"], url, params) for item in new_results]
+    print("=== Alert ===")
+    print("Nouveaux résultats trouvés :")
+    print(json.dumps(new_info, indent=2))
+    send_email_alert(new_info)
+    
+def send_email_alert(new_info):
+    sender_email = os.getenv("APP_GOOGLE_EMAIL")
+    receiver_email = "p.mazaingue@ideta.be"
+    password = os.getenv("APP_GOOGLE_PASSWORD") 
+
+    subject = "Nouvelle alerte de résultats détectée"
+    body = json.dumps(new_info, indent=2)
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+        print("Email envoyé avec succès.")
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de l'e-mail : {e}")
 
 
 if __name__ == "__main__":
@@ -207,17 +248,20 @@ if __name__ == "__main__":
     files = build_files()
 
     
-    """
+    # Load environment variables from .env file
+    load_dotenv()
+    
     
     while True:
         check_new_results(url, params, files)
         print("Waiting for 5 minutes before the next check...")
         time.sleep(300)  # Wait for 5 minutes (300 seconds)
     """
-    
     details = get_info_with_ref("SC5-23-2016-2017","31071371Coordinationandsupportaction1447113600000", url, params)
     if details:
         print("=== Détails de l'appel d'offre ===")
         for k, v in details.items():
             print(f"{k}: {v}")
+
+    """
 
