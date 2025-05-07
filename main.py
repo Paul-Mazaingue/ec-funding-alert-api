@@ -158,9 +158,6 @@ def get_info_with_ref(identifier,ref, url, params):
         }
     })
 
-    print("=== Query ===")
-    print(json.dumps(base_query, indent=2))
-
     # Ouverture manuelle des fichiers nécessaires
     lang_file = open(f'{CONFIG_DIR}/languages.json', 'rb')
     sort_file = open(f'{CONFIG_DIR}/sort.json', 'rb')
@@ -187,15 +184,40 @@ def get_info_with_ref(identifier,ref, url, params):
         print(f"Aucun résultat trouvé pour l'identifiant : {identifier}")
         return None
 
-    
-    # Il faudra faire en sorte de récupérer le résultat correspondant à la reférence
+    print("========= test ===========")
+    print(results)
+
+    # Si le nombre total de résultats est supérieur à la taille de la page multipliée par le numéro de la page, il faut continuer à paginer
+    while data.get("totalResults") > data.get("pageSize") * data.get("pageNumber"):
+        print("Ajout de la page suivante :" + str(data.get("pageNumber") + 1))
+        params["pageNumber"] = data.get("pageNumber") + 1
+
+        # Rebuild the files to ensure they are not closed
+        lang_file = open(f'{CONFIG_DIR}/languages.json', 'rb')
+        sort_file = open(f'{CONFIG_DIR}/sort.json', 'rb')
+        files = [
+            ('query', ('inline-query.json', json.dumps(base_query), 'application/json')),
+            ('languages', ('languages.json', lang_file, 'application/json')),
+            ('sort', ('sort.json', sort_file, 'application/json'))
+        ]
+
+        try:
+            response = requests.post(url, params=params, files=files)
+            data = response.json()
+            results.extend(response.json().get("results", []))
+        finally:
+            lang_file.close()
+            sort_file.close()
+
     result = None
     for res in results:
-        print("essai")
         if res.get("reference") == ref:
-            print("trouvé")
             result = res
             break
+
+    if result is None:
+        print(f"No matching result found for reference: {ref}")
+        return None
 
     url_basic = result.get("url")
     if url_basic.endswith(".json"):
@@ -248,9 +270,6 @@ def get_info_with_ref(identifier,ref, url, params):
 def send_alert(new_results, url, params):
     # Récupération des informations sur les résultats
     new_info = [get_info_with_ref(item["identifier"], item["reference"], url, params) for item in new_results]
-    print("=== Alert ===")
-    print("Nouveaux résultats trouvés :")
-    print(json.dumps(new_info, indent=2))
     send_email_alert(new_info)
     
 def send_email_alert(new_info):
@@ -293,14 +312,15 @@ if __name__ == "__main__":
     load_dotenv()
     
     
+        
+    
     while True:
         check_new_results(url, params, files)
         print("Waiting for 5 minutes before the next check...")
         time.sleep(300)  # Wait for 5 minutes (300 seconds)
     """
-    details = get_info_with_ref(["SC5-23-2016-2017"],"31071371Coordinationandsupportaction1447113600000", url, params)
+    details = get_info_with_ref(["SMP-COSME-2021-CLUSTER-01"],"3884COMPETITIVE_CALLen", url, params)
     if details:
         send_email_alert(details)
     """
-    
 

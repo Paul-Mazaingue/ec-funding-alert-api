@@ -1,3 +1,4 @@
 /data
 /other
+/__pycache__
 .env
