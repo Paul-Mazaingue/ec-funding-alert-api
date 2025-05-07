@@ -197,11 +197,52 @@ def get_info_with_ref(identifier,ref, url, params):
             result = res
             break
 
+    url_basic = result.get("url")
+    if url_basic.endswith(".json"):
+        url = "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/" + identifier[0]
+    else:
+        url = "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/competitive-calls-cs/" + result.get("metadata", {}).get("callccm2Id")[0]
+
+    metadata = result.get("metadata", {})
+    
+    title = metadata.get("title")
+    starting_date = metadata.get("startDate")
+    deadline = metadata.get("deadlineDate")
+    match result.get("type"):
+        case "0":
+            type = "Tenders"
+        case "1":
+            type = "Direct calls for proposals (issued by the EU)"
+        case "2":
+            type = "EU External Actions"
+        case "6":
+            type = "Funding"
+        case "8":
+            type = "Calls for funding in cascade (issued by funded projects)"
+        case _:
+            type = "other" 
+
+    match result.get("status"):
+        case "31094501":
+            status = "Open"
+        case "31094502":
+            status = "Closed"
+        case "31094503":
+            status = "Forthcoming"
+        case _:
+            status = "other"
+    
+
+
     return {
-        "reference": result.get("reference"),
-        "title": result.get("title"),
-        "programme": result.get("summary"),
-        "startDate": result.get("url")
+        "title": title,
+        "starting_date": starting_date,
+        "deadline": deadline,
+        "type": type,
+        "status": status,
+        "url": url,
+        "identifier": identifier[0],
+        "reference": ref,
     }
 
 def send_alert(new_results, url, params):
@@ -257,11 +298,9 @@ if __name__ == "__main__":
         print("Waiting for 5 minutes before the next check...")
         time.sleep(300)  # Wait for 5 minutes (300 seconds)
     """
-    details = get_info_with_ref("SC5-23-2016-2017","31071371Coordinationandsupportaction1447113600000", url, params)
+    details = get_info_with_ref(["SC5-23-2016-2017"],"31071371Coordinationandsupportaction1447113600000", url, params)
     if details:
-        print("=== Détails de l'appel d'offre ===")
-        for k, v in details.items():
-            print(f"{k}: {v}")
-
+        send_email_alert(details)
     """
+    
 
