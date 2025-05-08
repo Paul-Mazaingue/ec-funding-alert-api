@@ -1,0 +1,8 @@
+{
+  "emails": [
+    "p.mazaingue@ideta.be",
+    "mazainguepaul@gmail.com"
+  ],
+  "interval": 5,
+  "alert_message": "<strong>{title}</strong>\r\n\r\nStarting date : {starting_date}\r\nDeadline: {deadline}\r\n\r\nType : {type}\r\nStatus: {status}\r\n\r\nMore informations : {url}"
+}

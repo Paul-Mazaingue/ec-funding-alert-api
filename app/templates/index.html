@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Veille Appels d'Offres</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-2xl mx-auto py-10">
+    <h1 class="text-2xl font-bold mb-4">Configuration</h1>
+    <form action="/update-config" method="post" class="space-y-4 bg-white p-4 rounded shadow">
+      <div>
+        <label class="block font-semibold">Emails (séparés par virgule)</label>
+        <input name="emails" type="text" value="{{ ','.join(config.emails) }}" class="w-full border rounded p-2" />
+      </div>
+      <div>
+        <label class="block font-semibold">Intervalle (minutes)</label>
+        <input name="interval" type="number" value="{{ config.interval }}" class="w-full border rounded p-2" />
+      </div>
+      <div>
+        <label class="block font-semibold">Message d'alerte</label>
+        <textarea name="alert_message" class="w-full border rounded p-2 resize-none" style="overflow:hidden;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';" onload="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';">{{ config.alert_message }}</textarea>
+        <script>
+          document.addEventListener("DOMContentLoaded", function() {
+            const textarea = document.querySelector('textarea[name="alert_message"]');
+            if (textarea) {
+              textarea.style.height = 'auto';
+              textarea.style.height = textarea.scrollHeight + 'px';
+            }
+          });
+        </script>
+        <p class="text-sm text-gray-500">
+          Utilisez les mots-clés suivants entre {} : title, starting_date, deadline, type, status, url, identifier, reference. <br>
+          Vous pouvez également utiliser des balises HTML telles que &lt;strong&gt; pour mettre en gras, &lt;em&gt; pour mettre en italique. Assurez-vous de toujours fermer correctement vos balises HTML pour éviter des erreurs d'affichage.
+        <p class="text-sm text-gray-500 mt-2">
+          Exemple : <br>
+          &lt;strong&gt;{title}&lt;/strong&gt; commence le &lt;em&gt;{starting_date}&lt;/em&gt; et se termine le &lt;em&gt;{deadline}&lt;/em&gt;.
+        </p>
+      </div>
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Enregistrer</button>
+    </form>
+
+    <h2 class="text-xl font-bold mt-8 mb-4">Dernières alertes</h2>
+    <ul class="space-y-2">
+      {% for alert in alerts %}
+        <li class="bg-white p-3 rounded shadow">
+          <span>
+            Détecté le: {{ alert.retrieved_at }} <br>
+            {{ config.alert_message | replace('{title}', alert.title | join('')) | replace('{starting_date}', alert.starting_date) | replace('{deadline}', alert.deadline) | replace('{type}', alert.type) | replace('{status}', alert.status) | replace('{url}', '<a href="' ~ alert.url ~ '" class="text-blue-600 underline" target="_blank">' ~ alert.url ~ '</a>') | replace('{identifier}', alert.identifier) | replace('{reference}', alert.reference) | replace('\n', '<br>') | safe }}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</body>
+</html>
