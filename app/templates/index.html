@@ -30,7 +30,7 @@
           });
         </script>
         <p class="text-sm text-gray-500">
-          Utilisez les mots-clés suivants entre {} : title, starting_date, deadline, type, status, url, identifier, reference. <br>
+          Utilisez les mots-clés suivants entre {} : title, summary, starting_date, deadline, type, status, url, identifier, reference, frameworkProgramme. <br>
           Vous pouvez également utiliser des balises HTML telles que &lt;strong&gt; pour mettre en gras, &lt;em&gt; pour mettre en italique. Assurez-vous de toujours fermer correctement vos balises HTML pour éviter des erreurs d'affichage.
         <p class="text-sm text-gray-500 mt-2">
           Exemple : <br>
@@ -46,7 +46,7 @@
         <li class="bg-white p-3 rounded shadow">
           <span>
             Détecté le: {{ alert.retrieved_at }} <br>
-            {{ config.alert_message | replace('{title}', alert.title | join('')) | replace('{starting_date}', alert.starting_date) | replace('{deadline}', alert.deadline) | replace('{type}', alert.type) | replace('{status}', alert.status) | replace('{url}', '<a href="' ~ alert.url ~ '" class="text-blue-600 underline" target="_blank">' ~ alert.url ~ '</a>') | replace('{identifier}', alert.identifier) | replace('{reference}', alert.reference) | replace('\n', '<br>') | safe }}
+            {{ config.alert_message | replace('{title}', alert.title | join('')) | replace('{starting_date}', alert.starting_date) | replace('{deadline}', alert.deadline) | replace('{type}', alert.type) | replace('{status}', alert.status) | replace('{url}', '<a href="' ~ alert.url ~ '" class="text-blue-600 underline" target="_blank">' ~ alert.url ~ '</a>') | replace('{identifier}', alert.identifier) | replace('{reference}', alert.reference) | replace('{summary}', alert.summary) | replace('{frameworkProgramme}', alert.frameworkProgramme) | replace('\n', '<br>') | safe }}
           </span>
         </li>
       {% endfor %}

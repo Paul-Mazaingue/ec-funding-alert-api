@@ -41,8 +41,14 @@ def send_email_alert(results: List[Dict[str, str]], receivers: List[str]) -> Non
         alert_message = alert_message.replace("{url}", str(result.get("url", "")))
         alert_message = alert_message.replace("{identifier}", str(result.get("identifier", "")))
         alert_message = alert_message.replace("{reference}", str(result.get("reference", "")))
+        alert_message = alert_message.replace("{summary}", str(result.get("summary", "")))
+        alert_message = alert_message.replace("{frameworkProgramme}", str(result.get("frameworkProgramme", "")))
         alert_message = alert_message.replace("\n", "<br>")
-        body += alert_message + "<br><br>--------------------------------<br><br>"
+        body += (
+            f"<div style='border-top: 1px solid #ccc; margin: 20px 0; padding-top: 10px;'>"
+            f"{alert_message}"
+            f"</div>"
+        )
 
     msg.attach(MIMEText(body, 'html'))  # Change MIME type to 'html'
 
