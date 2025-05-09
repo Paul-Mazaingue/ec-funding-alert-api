@@ -5,6 +5,7 @@ import json
 
 from .utils import load_json, save_json
 from .alert import send_email_alert
+from .facet import get_value_from_rawValue, get_rawValue_from_value
 import asyncio
 import aiohttp
 from datetime import datetime
@@ -206,9 +207,9 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
                 "title": metadata.get("title"),
                 "starting_date": format_date(metadata.get("startDate")[0] if isinstance(metadata.get("startDate"), list) else metadata.get("startDate")),
                 "deadline": format_date(metadata.get("deadlineDate")[0] if isinstance(metadata.get("deadlineDate"), list) else metadata.get("deadlineDate")),
-                "type": map_type(metadata.get("type")[0]),
-                "status": map_status(metadata.get("status")[0]),
-                "frameworkProgramme": map_frameworkProgramme(metadata.get("frameworkProgramme")[0]),
+                "type": map_type(metadata.get("type")[0], "type"), # Type in facet is not the same as the website
+                "status": get_value_from_rawValue(metadata.get("status")[0], "status"),
+                "frameworkProgramme": get_value_from_rawValue(metadata.get("frameworkProgramme")[0], "frameworkProgramme"),
                 "url": full_url,
                 "identifier": identifier,
                 "reference": reference,
@@ -216,88 +217,12 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
             }
     return None
 
-def map_frameworkProgramme(frameworkProgramme_code: str) -> str:
-    return {
-        "31045243": "Horizon 2020 Framework Programme (H2020 - 2014-2020)",
-        "43108390": "Horizon Europe (HORIZON)",
-        "43251567": "Connecting Europe Facility (CEF)",
-        "43152860": "Digital Europe Programme (DIGITAL)",
-        "43353764": "Erasmus+ (ERASMUS+)",
-        "43252476": "Single Market Programme (SMP)",
-        "44181033": "European Defence Fund (EDF)",
-        "43252405": "Programme for the Environment and Climate Action (LIFE)",
-        "43251814": "Creative Europe Programme (CREA)",
-        "31059643": "Programme for the Competitiveness of Enterprises and small and medium-sized enterprises (COSME - 2014-2020)",
-        "43298664": "Promotion of Agricultural Products (AGRIP)",
-        "43332642": "EU4Health Programme (EU4H)",
-        "43251589": "Citizens, Equality, Rights and Values Programme (CERV)",
-        "42810547": "Europe Direct (ED)",
-        "31072773": "Promotion of Agricultural Products (AGRIP - 2014-2020)",
-        "31076817": "Rights, Equality and Citizenship Programme (REC - 2014-2020)",
-        "31061266": "3rd Health Programme (3HP - 2014-2020)",
-        "31077817": "Internal Security Fund Police (ISFP - 2014-2020)",
-        "43298916": "Euratom Research and Training Programme (EURATOM)",
-        "31084392": "Hercule III (HERC - 2014-2020)",
-        "31109727": "European Defence Industrial Development Programme (EDIDP - 2014-2020)",
-        "43251842": "Union Anti-fraud Programme (EUAF)",
-        "111111": "EU External Action - Prospect (RELEX-PROSPECT)",
-        "31070247": "Justice Programme (JUST - 2014-2020)",
-        "45532249": "EU Bodies and Agencies (EUBA)",
-        "43254019": "European Social Fund + (ESF)",
-        "43252449": "Research Fund for Coal & Steel (RFCS)",
-        "43697167": "European Parliament (EP)",
-        "31077795": "Asylum, Migration and Integration Fund (AMIF - 2014-2020)",
-        "44416173": "Interregional Innovation Investments Instrument (I3)",
-        "31084250": "Pilot Projects and Preparatory Actions (PPPA - 2014-2020)",
-        "43089234": "Innovation Fund (INNOVFUND)",
-        "43637601": "Pilot Projects & Preparation Actions (PPPA)",
-        "31059093": "Erasmus+ Programme (EPLUS - 2014-2020)",
-        "31059083": "Creative Europe (CREA - 2014-2020)",
-        "43392145": "European Maritime, Fisheries and Aquaculture Fund (EMFAF)",
-        "43252368": "Internal Security Fund (ISF)",
-        "43252386": "Justice Programme (JUST)",
-        "43298203": "Union Civil Protection Mechanism (UCPM)",
-        "43252517": "Social Prerogative and Specific Competencies Lines (SOCPL)",
-        "31061225": "Research Fund for Coal & Steel (RFCS - 2014-2020)",
-        "43251447": "Asylum, Migration and Integration Fund (AMIF)",
-        "31061273": "Consumer Programme (CP - 2014-2020)",
-        "31082527": "Union Civil Protection Mechanism (UCPM - 2014-2020)",
-        "31098847": "European Maritime and Fisheries Fund (EMFF - 2014-2020)",
-        "43254037": "European Solidarity Corps (ESC)",
-        "31107710": "Programme for the Environment and Climate Action (LIFE - 2014-2020)",
-        "43252433": "Programme for the Protection of the Euro against Counterfeiting (PERICLES IV)",
-        "31059088": "Europe For Citizens (EFC - 2014-2020)",
-        "43251882": "Support for information measures relating to the common agricultural policy (IMCAP)",
-        "31077833": "Internal Security Fund Borders and Visa (ISFB - 2014-2020)",
-        "43251530": "Border Management and Visa Policy Instrument (BMVI)",
-        "44773133": "Information Measures for the EU Cohesion policy (IMREG)",
-        "31088049": "European Statistics (ESTAT - 2014-2020)",
-        "42198993": "Support for information measures relating to the common agricultural policy (IMCAP - 2014-2020)",
-        "43253967": "Renewable Energy Financing Mechanism (RENEWFM)",
-        "44773066": "Just Transition Mechanism (JTM)",
-        "45876777": "Neighbourhood, Development and International Cooperation Instrument Global Europe (NDICI)",
-        "46324255": "Technical assistance for ERDF, CF and JTF (ERDF-TA)",
-        "31059098": "EU Aid Volunteers programme (EUAID - 2014-2020)",
-        "31075571": "Intra-Africa Academic Mobility Scheme (PANAF - 2014-2020)",
-        "42992790": "European Solidarity Corps (ESC - 2014-2020)",
-    }.get(frameworkProgramme_code, "Unknown")
-
-
 def map_type(type_code: str) -> str:
     return {
-        "0": "Tenders",
         "1": "Direct calls for proposals (issued by the EU)",
         "2": "EU External Actions",
-        "6": "Funding",
         "8": "Cascade funding"
     }.get(type_code, "Other")
-
-def map_status(status_code: str) -> str:
-    return {
-        "31094501": "Open",
-        "31094502": "Closed",
-        "31094503": "Forthcoming"
-    }.get(status_code, "Other")
 
 async def check_new_results(url: str, params: Dict, receivers: List[str]) -> List[Dict]:
     current = await fetch_all_references(url, params)

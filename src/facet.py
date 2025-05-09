@@ -3,12 +3,12 @@ import requests
 import aiohttp
 import asyncio
 from typing import List, Dict, Optional
-from utils import load_json, save_json
+from .utils import load_json, save_json
 
 URL = "https://api.tech.ec.europa.eu/search-api/prod/rest/facet"
 PARAMS = {"apiKey": "SEDIA", "text": "***"}
-CONFIG_DIR = "../config"
-DATA_DIR = "../data"
+CONFIG_DIR = "config"
+DATA_DIR = "data"
 
 def transform_facets(data: Dict, output_file: str):
     output = []
