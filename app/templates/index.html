@@ -4,22 +4,34 @@
   <meta charset="UTF-8" />
   <title>Veille Appels d'Offres</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .form-section {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .form-section:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-  <div class="max-w-2xl mx-auto py-10">
-    <h1 class="text-2xl font-bold mb-4">Configuration</h1>
-    <form action="/update-config" method="post" class="space-y-4 bg-white p-4 rounded shadow">
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-4xl mx-auto py-10 px-4">
+    <h1 class="text-3xl font-extrabold text-center text-blue-700 mb-6">Configuration</h1>
+    <form action="/update-config" method="post" class="space-y-6 bg-white p-6 rounded-lg shadow-lg form-section">
       <div>
-        <label class="block font-semibold">Emails (séparés par virgule)</label>
-        <input name="emails" type="text" value="{{ ','.join(config.emails) }}" class="w-full border rounded p-2" />
+        <label class="block font-semibold text-gray-700">Emails (séparés par virgule)</label>
+        <input name="emails" type="text" value="{{ ','.join(config.emails) }}" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
       </div>
       <div>
-        <label class="block font-semibold">Intervalle (minutes)</label>
-        <input name="interval" type="number" value="{{ config.interval }}" class="w-full border rounded p-2" />
+        <label class="block font-semibold text-gray-700">Intervalle (minutes)</label>
+        <input name="interval" type="number" value="{{ config.interval }}" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
       </div>
       <div>
-        <label class="block font-semibold">Message d'alerte</label>
-        <textarea name="alert_message" class="w-full border rounded p-2 resize-none" style="overflow:hidden;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';" onload="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';">{{ config.alert_message }}</textarea>
+        <label class="block font-semibold text-gray-700">Message d'alerte</label>
+        <textarea name="alert_message" class="w-full border border-gray-300 rounded-lg p-3 resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none" style="overflow:hidden;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';" onload="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';">{{ config.alert_message }}</textarea>
         <script>
           document.addEventListener("DOMContentLoaded", function() {
             const textarea = document.querySelector('textarea[name="alert_message"]');
@@ -29,18 +41,19 @@
             }
           });
         </script>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-gray-500 mt-2">
           Utilisez les mots-clés suivants entre {} : title, summary, starting_date, deadline, type, status, url, identifier, reference, frameworkProgramme. <br>
           Vous pouvez également utiliser des balises HTML telles que &lt;strong&gt; pour mettre en gras, &lt;em&gt; pour mettre en italique. Assurez-vous de toujours fermer correctement vos balises HTML pour éviter des erreurs d'affichage.
+        </p>
         <p class="text-sm text-gray-500 mt-2">
           Exemple : <br>
           &lt;strong&gt;{title}&lt;/strong&gt; commence le &lt;em&gt;{starting_date}&lt;/em&gt; et se termine le &lt;em&gt;{deadline}&lt;/em&gt;.
         </p>
       </div>
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Enregistrer</button>
+      <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Enregistrer</button>
     </form>
-    <form action="/update-query" method="post" class="space-y-4 bg-white p-4 rounded shadow">
-      <h2 class="text-xl font-bold mb-4">Critères de Recherche</h2>
+    <form action="/update-query" method="post" class="space-y-6 bg-white p-6 rounded-lg shadow-lg form-section mt-8">
+      <h2 class="text-2xl font-bold text-blue-700 mb-4">Critères de Recherche</h2>
       
       <!-- Types -->
       <div>
@@ -115,7 +128,7 @@
       <input type="text" name="text_search" value="{{ query.text_search if query and query.text_search else '' }}" class="w-full border rounded p-2" />
       </div>
 
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Enregistrer</button>
+      <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Enregistrer</button>
     </form>
 
     <script>
@@ -140,12 +153,12 @@
       });
       });
     </script>
-    <h2 class="text-xl font-bold mt-8 mb-4">Dernières alertes</h2>
-    <ul class="space-y-2">
+    <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Dernières alertes</h2>
+    <ul class="space-y-4">
       {% for alert in alerts %}
-        <li class="bg-white p-3 rounded shadow">
-          <span>
-            Détecté le: {{ alert.retrieved_at }} <br>
+        <li class="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition">
+          <span class="text-gray-700">
+            Détecté le: <strong>{{ alert.retrieved_at }}</strong> <br>
             {{ config.alert_message | replace('{title}', alert.title | join('')) | replace('{starting_date}', alert.starting_date) | replace('{deadline}', alert.deadline) | replace('{type}', alert.type) | replace('{status}', alert.status) | replace('{url}', '<a href="' ~ alert.url ~ '" class="text-blue-600 underline" target="_blank">' ~ alert.url ~ '</a>') | replace('{identifier}', alert.identifier) | replace('{reference}', alert.reference) | replace('{summary}', alert.summary) | replace('{frameworkProgramme}', alert.frameworkProgramme) | replace('\n', '<br>') | safe }}
           </span>
         </li>

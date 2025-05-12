@@ -199,7 +199,7 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
             def format_date(date_str: str) -> str:
                 try:
                     date_obj = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f%z")
-                    return date_obj.strftime("%d/%m/%Y")
+                    return date_obj.strftime("%d-%m-%Y")
                 except ValueError:
                     return date_str  # Return the original string if parsing fails
 
@@ -213,7 +213,8 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
                 "url": full_url,
                 "identifier": identifier,
                 "reference": reference,
-                "summary": res.get("summary")
+                "summary": res.get("summary"),
+                "descriptionByte" : metadata.get("descriptionByte")
             }
     return None
 

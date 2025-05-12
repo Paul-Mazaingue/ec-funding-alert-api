@@ -61,21 +61,21 @@ async def dashboard(request: Request):
                 
                 if start_date_str:
                     date_obj = datetime.fromtimestamp(int(start_date_str) / 1000)
-                    query["startDate"]["start"] = date_obj.strftime("%d/%m/%Y")
+                    query["startDate"]["start"] = date_obj.strftime("%d-%m-%Y")
                 end_date_str = condition["range"]["startDate"].get("lte")
                 if end_date_str:
                     date_obj = datetime.fromtimestamp(int(end_date_str) / 1000)
-                    query["startDate"]["end"] = date_obj.strftime("%d/%m/%Y")
+                    query["startDate"]["end"] = date_obj.strftime("%d-%m-%Y")
 
             if "deadlineDate" in condition["range"]:
                 start_date_str = condition["range"]["deadlineDate"].get("gte")
                 if start_date_str:
                     date_obj = datetime.fromtimestamp(int(start_date_str) / 1000)
-                    query["deadlineDate"]["start"] = date_obj.strftime("%d/%m/%Y")
+                    query["deadlineDate"]["start"] = date_obj.strftime("%d-%m-%Y")
                 end_date_str = condition["range"]["deadlineDate"].get("lte")
                 if end_date_str:
                     date_obj = datetime.fromtimestamp(int(end_date_str) / 1000)
-                    query["deadlineDate"]["end"] = date_obj.strftime("%d/%m/%Y")
+                    query["deadlineDate"]["end"] = date_obj.strftime("%d-%m-%Y")
             
         if "bool" in condition:
             query["text_search"] = condition["bool"].get("should", [{}])[0].get("phrase", {}).get("query", "")
@@ -120,12 +120,12 @@ async def update_query(
         framework_programmes=get_rawValue_from_value(frameworkProgramme.strip(), "frameworkProgramme") if frameworkProgramme else None,
         call_identifier=get_rawValue_from_value(callIdentifier.strip(), "callIdentifier") if callIdentifier else None,
         starting_date_range={
-            "gte": int(datetime.strptime(startDate_start, "%d/%m/%Y").timestamp() * 1000) if startDate_start else None,
-            "lte": int(datetime.strptime(startDate_end, "%d/%m/%Y").timestamp() * 1000) if startDate_end else None
+            "gte": int(datetime.strptime(startDate_start, "%d-%m-%Y").timestamp() * 1000) if startDate_start else None,
+            "lte": int(datetime.strptime(startDate_end, "%d-%m-%Y").timestamp() * 1000) if startDate_end else None
         },
         deadline_range={
-            "gte": int(datetime.strptime(deadlineDate_start, "%d/%m/%Y").timestamp() * 1000) if deadlineDate_start else None,
-            "lte": int(datetime.strptime(deadlineDate_end, "%d/%m/%Y").timestamp() * 1000) if deadlineDate_end else None
+            "gte": int(datetime.strptime(deadlineDate_start, "%d-%m-%Y").timestamp() * 1000) if deadlineDate_start else None,
+            "lte": int(datetime.strptime(deadlineDate_end, "%d-%m-%Y").timestamp() * 1000) if deadlineDate_end else None
         },
         text_search=text_search.strip()
     )

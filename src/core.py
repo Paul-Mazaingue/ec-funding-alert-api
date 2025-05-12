@@ -17,7 +17,7 @@ async def periodic_checker():
         try:
             alerts = await check_new_results(URL, PARAMS, config.get("emails", []))
             if alerts:
-                timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # Generate timestamp
+                timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")  # Generate timestamp
                 for alert in alerts:
                     alert["retrieved_at"] = timestamp  # Add timestamp to each alert
                 history = load_json(ALERTS_PATH) or []
