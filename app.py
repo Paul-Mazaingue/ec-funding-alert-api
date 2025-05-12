@@ -27,7 +27,7 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    config = load_json(CONFIG_PATH) or {"emails": [], "interval": 5}
+    config = load_json(CONFIG_PATH) or {"emails": [], "interval": 5, "keywords": []}
     alerts = load_json(ALERTS_PATH) or []
     raw_query = load_json(QUERY_PATH) or {}
 
@@ -97,9 +97,10 @@ async def dashboard(request: Request):
     })
 
 @app.post("/update-config")
-async def update_config(emails: str = Form(...), interval: int = Form(...), alert_message: str = Form(...)):
+async def update_config(emails: str = Form(...), interval: int = Form(...), alert_message: str = Form(...), keywords: str = Form(...)):
     email_list = [e.strip() for e in emails.split(",") if e.strip()]
-    save_json({"emails": email_list, "interval": interval, "alert_message":alert_message}, CONFIG_PATH)
+    keyword_list = [k.strip() for k in keywords.split(",") if k.strip()]
+    save_json({"emails": email_list, "interval": interval, "alert_message": alert_message, "keywords": keyword_list}, CONFIG_PATH)
     return RedirectResponse("/", status_code=303)
 
 @app.post("/update-query")

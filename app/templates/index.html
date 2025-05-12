@@ -50,6 +50,10 @@
           &lt;strong&gt;{title}&lt;/strong&gt; commence le &lt;em&gt;{starting_date}&lt;/em&gt; et se termine le &lt;em&gt;{deadline}&lt;/em&gt;.
         </p>
       </div>
+      <div>
+        <label class="block font-semibold text-gray-700">Mots-clés (séparés par virgule) : seuls les appels d'offres contenant les mots-clés dans "Topic description" seront sélectionnés</label>
+        <input name="keywords" type="text" value="{{ ','.join(config.keywords) }}" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+      </div>
       <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Enregistrer</button>
     </form>
     <form action="/update-query" method="post" class="space-y-6 bg-white p-6 rounded-lg shadow-lg form-section mt-8">

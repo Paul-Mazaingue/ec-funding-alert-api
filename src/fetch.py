@@ -74,6 +74,8 @@ async def request_api_async(url: str, params: Dict, retries: int = 3, timeout: i
 
 
 async def fetch_all_references(url: str, params: Dict) -> List[Dict]:
+    config = load_json(f"{CONFIG_DIR}/config.json") or {}
+    keywords = config.get("keywords", [])
     all_refs = []
     response = await request_api_async(url, params)
     if not response:
@@ -83,7 +85,7 @@ async def fetch_all_references(url: str, params: Dict) -> List[Dict]:
     page_size = 100
     total_pages = (total_results + page_size - 1) // page_size
 
-    semaphore = asyncio.Semaphore(3)  # Limite à 3 requêtes simultanées
+    semaphore = asyncio.Semaphore(3)  # Limit to 3 simultaneous requests
 
     async def fetch_page(page: int):
         async with semaphore:
@@ -95,21 +97,30 @@ async def fetch_all_references(url: str, params: Dict) -> List[Dict]:
                 return []
             print("Page ", page, "/", total_pages)
             results = resp.get("results", [])
-            if len(results) < page_size:
-                print(f"[WARNING] Page {page} returned fewer results than expected: {len(results)} results")
+            filtered_results = [
+                result for result in results
+                if any(
+                    keyword.lower() in (
+                        " ".join(result.get("metadata", {}).get("descriptionByte", []))  # Join list if descriptionByte is a list
+                        if isinstance(result.get("metadata", {}).get("descriptionByte"), list)
+                        else result.get("metadata", {}).get("descriptionByte", "").lower()
+                    )
+                    for keyword in keywords
+                )
+            ]
             return [
                 {"reference": result.get("reference"), "identifier": result.get("metadata", {}).get("identifier")}
-                for result in results if result.get("reference") and result.get("metadata", {}).get("identifier")
+                for result in filtered_results if result.get("reference") and result.get("metadata", {}).get("identifier")
             ]
 
-    # Process pages in batches of 20
+    # Process pages in batches
     batch_size = 10
     for i in range(0, total_pages, batch_size):
         tasks = [fetch_page(page) for page in range(i + 1, min(i + batch_size + 1, total_pages + 1))]
         pages = await asyncio.gather(*tasks)
         for page_results in pages:
             all_refs.extend(page_results)
-        await asyncio.sleep(1)  # Pause pour ne pas saturer l'API
+        await asyncio.sleep(1)  # Pause to avoid API saturation
 
     print("Total references fetched: ", len(all_refs))
     return all_refs
@@ -189,6 +200,18 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
     for res in results:
         if res.get("reference") == reference:
             metadata = res.get("metadata", {})
+            description = (
+                " ".join(metadata.get("descriptionByte", []))  # Join list if descriptionByte is a list
+                if isinstance(metadata.get("descriptionByte"), list)
+                else metadata.get("descriptionByte", "").lower()
+            )
+            config = load_json(f"{CONFIG_DIR}/config.json") or {}
+            keywords = config.get("keywords", [])
+
+            # Filter based on keywords
+            if not any(keyword.lower() in description for keyword in keywords):
+                return None
+
             call_url = res.get("url", "")
             if call_url.endswith(".json"):
                 full_url = f"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/{identifier}"
@@ -213,8 +236,7 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
                 "url": full_url,
                 "identifier": identifier,
                 "reference": reference,
-                "summary": res.get("summary"),
-                "descriptionByte" : metadata.get("descriptionByte")
+                "summary": res.get("summary")
             }
     return None
 
