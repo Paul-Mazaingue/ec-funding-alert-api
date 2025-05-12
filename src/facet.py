@@ -92,6 +92,14 @@ def get_rawValue_from_value(value: str, facet_name: str) -> str:
             return item.get('rawValue')
     return value
 
+def get_all_values(facet_name: str) -> List[str]:
+    facet = load_json(f'{DATA_DIR}/facet.json')
+    facet_data = next((item for item in facet if facet_name in item), None)
+    if not facet_data:
+        print(f"Error: '{facet_name}' not found in facet.json")
+        return []
+    return [item.get('value') for item in facet_data[facet_name]]
+
 if __name__ == "__main__":
     print(get_value_from_rawValue("43108390", "frameworkProgramme"))
     print(get_rawValue_from_value("Horizon Europe (HORIZON)", "frameworkProgramme"))

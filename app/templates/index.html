@@ -39,7 +39,107 @@
       </div>
       <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Enregistrer</button>
     </form>
+    <form action="/update-query" method="post" class="space-y-4 bg-white p-4 rounded shadow">
+      <h2 class="text-xl font-bold mb-4">Critères de Recherche</h2>
+      
+      <!-- Types -->
+      <div>
+      <label class="block font-semibold mb-2">Types</label>
+      <div class="flex flex-wrap gap-2">
+      {% for type in available_query.type %}
+      <label class="flex items-center space-x-2">
+      <input type="checkbox" name="type" value="{{ type }}" {% if query.type and type in query.type %}checked{% endif %} />
+      <span>{{ type }}</span>
+      </label>
+      {% endfor %}
+      </div>
 
+      <!-- status -->
+      <div>
+      <label class="block font-semibold mb-2">Statuts</label>
+      <div class="flex flex-wrap gap-2">
+      {% for status in available_query.status %}
+      <label class="flex items-center space-x-2">
+      <input type="checkbox" name="status" value="{{ status }}" {% if query.status and status in query.status %}checked{% endif %} />
+      <span>{{ status }}</span>
+      </label>
+      {% endfor %}
+      </div>
+      </div>
+
+      <!-- Framework Programmes -->
+      <div>
+      <label class="block font-semibold mb-2">Programme Cadre</label>
+      <input type="text" placeholder="Rechercher..." class="w-full border rounded p-2 mb-2" oninput="filterDropdown('frameworkProgramme', this.value)" />
+      <select name="frameworkProgramme" id="frameworkProgramme" class="w-full border rounded p-2">
+      <option value="">-- Sélectionnez --</option>
+      {% for programme in available_query.frameworkProgramme %}
+      <option value="{{ programme }}" {% if query.frameworkProgramme and programme == query.frameworkProgramme %}selected{% endif %}>{{ programme }}</option>
+      {% endfor %}
+      </select>
+      </div>
+
+      <!-- Call Identifier -->
+      <div>
+      <label class="block font-semibold mb-2">Identifiant de l'Appel</label>
+      <input type="text" placeholder="Rechercher..." class="w-full border rounded p-2 mb-2" oninput="filterDropdown('callIdentifier', this.value)" />
+      <select name="callIdentifier" id="callIdentifier" class="w-full border rounded p-2">
+      <option value="">-- Sélectionnez --</option>
+      {% for identifier in available_query.callIdentifier %}
+      <option value="{{ identifier }}" {% if query.callIdentifier and identifier == query.callIdentifier %}selected{% endif %}>{{ identifier }}</option>
+      {% endfor %}
+      </select>
+      </div>
+
+      <!-- Starting Date Range -->
+      <div>
+      <label class="block font-semibold mb-2">Plage de Date de Début</label>
+      <div class="flex space-x-2">
+      <input type="text" name="startDate_start" placeholder="dd/mm/yyyy" value="{{ query.startDate.start if query and query.startDate and query.startDate.start else '' }}" class="w-full border rounded p-2 datepicker" />
+      <input type="text" name="startDate_end" placeholder="dd/mm/yyyy" value="{{ query.startDate.end if query and query.startDate and query.startDate.end else '' }}" class="w-full border rounded p-2 datepicker" />
+      </div>
+      </div>
+
+      <!-- Deadline Range -->
+      <div>
+      <label class="block font-semibold mb-2">Plage de Date Limite</label>
+      <div class="flex space-x-2">
+      <input type="text" name="deadlineDate_start" placeholder="dd/mm/yyyy" value="{{ query.deadlineDate.start if query.deadlineDate and query.deadlineDate.start else '' }}" class="w-full border rounded p-2 datepicker" />
+      <input type="text" name="deadlineDate_end" placeholder="dd/mm/yyyy" value="{{ query.deadlineDate.end if query.deadlineDate and query.deadlineDate.end else '' }}" class="w-full border rounded p-2 datepicker" />
+      </div>
+      </div>
+
+      <!-- Text Search -->
+      <div>
+      <label class="block font-semibold mb-2">Recherche Texte</label>
+      <input type="text" name="text_search" value="{{ query.text_search if query and query.text_search else '' }}" class="w-full border rounded p-2" />
+      </div>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Enregistrer</button>
+    </form>
+
+    <script>
+      function filterDropdown(id, value) {
+      const select = document.getElementById(id);
+      const options = select.querySelectorAll('option');
+      options.forEach(option => {
+        if (option.textContent.toLowerCase().includes(value.toLowerCase()) || option.value === "") {
+        option.style.display = "";
+        } else {
+        option.style.display = "none";
+        }
+      });
+      }
+
+      document.querySelectorAll('.datepicker').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.type = 'date';
+      });
+      input.addEventListener('blur', function() {
+        if (!this.value) this.type = 'text';
+      });
+      });
+    </script>
     <h2 class="text-xl font-bold mt-8 mb-4">Dernières alertes</h2>
     <ul class="space-y-2">
       {% for alert in alerts %}

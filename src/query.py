@@ -76,17 +76,17 @@ def generate_query(
 
     return {"bool": {"must": must_clauses}}
 
-
+#print("Query Generation Script")
 
 # Example usage
 #query = generate_query(
-    #text_search="Digital",
-    #framework_programmes="43108390",
-    #call_identifier="HORIZON-CL5-2024-D3-01",
-    #starting_date_range={"gte": "1672441200000", "lte":"1710889200000"}
-    #deadline_range={"gte":"1704063600000", "lte":"1713304800000"},
-    #statuses=["31094502", "31094503"]
-    #types=["1","2"]
+#    text_search="Digital",
+#    framework_programmes="43108390",
+#    call_identifier="HORIZON-CL5-2024-D3-01",
+#    starting_date_range={"gte": "1672441200000", "lte":"1710889200000"},
+#    deadline_range={"gte":"1704063600000", "lte":"1713304800000"},
+#    statuses=["31094502", "31094503"],
+#    types=["1","2"]
 #)
 #print("Generated Query:")
 #print(json.dumps(query, indent=4))

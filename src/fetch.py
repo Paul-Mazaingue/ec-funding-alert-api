@@ -83,7 +83,7 @@ async def fetch_all_references(url: str, params: Dict) -> List[Dict]:
     page_size = 100
     total_pages = (total_results + page_size - 1) // page_size
 
-    semaphore = asyncio.Semaphore(5)  # Limite à 3 requêtes simultanées
+    semaphore = asyncio.Semaphore(3)  # Limite à 3 requêtes simultanées
 
     async def fetch_page(page: int):
         async with semaphore:
@@ -103,7 +103,7 @@ async def fetch_all_references(url: str, params: Dict) -> List[Dict]:
             ]
 
     # Process pages in batches of 20
-    batch_size = 20
+    batch_size = 10
     for i in range(0, total_pages, batch_size):
         tasks = [fetch_page(page) for page in range(i + 1, min(i + batch_size + 1, total_pages + 1))]
         pages = await asyncio.gather(*tasks)
@@ -207,7 +207,7 @@ async def get_detailed_info(identifier: str, reference: str, url: str, params: D
                 "title": metadata.get("title"),
                 "starting_date": format_date(metadata.get("startDate")[0] if isinstance(metadata.get("startDate"), list) else metadata.get("startDate")),
                 "deadline": format_date(metadata.get("deadlineDate")[0] if isinstance(metadata.get("deadlineDate"), list) else metadata.get("deadlineDate")),
-                "type": map_type(metadata.get("type")[0], "type"), # Type in facet is not the same as the website
+                "type": map_type(metadata.get("type")[0]), # Type in facet is not the same as the website
                 "status": get_value_from_rawValue(metadata.get("status")[0], "status"),
                 "frameworkProgramme": get_value_from_rawValue(metadata.get("frameworkProgramme")[0], "frameworkProgramme"),
                 "url": full_url,
