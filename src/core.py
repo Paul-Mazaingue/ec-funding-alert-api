@@ -82,7 +82,7 @@ async def periodic_checker() -> None:
                             if(details):
                                 # Update and save alert with new details
                                 _update_and_save_alert(alerts, alert_name, details)
-                                email_subject = f"Nouveaux résultats : {alert_name} (Total: {total_results})"
+                                email_subject = f"Nouveaux résultats : {alert_name}"
                                 send_email_alert(details, alert.get("message"), alert.get("emails"), email_subject)
                         
                             # Save the updated alert with totalResults

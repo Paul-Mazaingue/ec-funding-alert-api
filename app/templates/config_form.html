@@ -15,8 +15,11 @@
     <input name="interval" type="number" value="{{ alert.interval }}" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
   </div>
   <div>
-    <label class="block font-semibold text-gray-700">Message d'alerte</label>
-    <textarea name="message" class="w-full border border-gray-300 rounded-lg p-3 resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none" style="overflow:hidden;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';">{{ alert.message }}</textarea>
+    <div class="flex justify-between items-center">
+      <label class="block font-semibold text-gray-700">Message d'alerte</label>
+      <button type="button" onclick="resetMessage()" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm">Réinitialiser</button>
+    </div>
+    <textarea id="message-textarea" name="message" class="w-full border border-gray-300 rounded-lg p-3 resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none" style="overflow:hidden;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';">{{ alert.message }}</textarea>
     <p class="text-sm text-gray-500 mt-2">
       Utilisez les mots-clés suivants entre {} : title, summary, starting_date, deadline, type, status, url, identifier, reference, frameworkProgramme. <br>
       Vous pouvez également utiliser des balises HTML telles que &lt;strong&gt; pour mettre en gras, &lt;em&gt; pour mettre en italique. Assurez-vous de toujours fermer correctement vos balises HTML pour éviter des erreurs d'affichage.
@@ -31,13 +34,18 @@
     <input name="keywords" type="text" value="{{ ','.join(alert.keywords) }}" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
   </div>
   
+  <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+    <h3 class="font-bold text-lg text-gray-700">Paramètres de recherche</h3>
+    <button type="button" onclick="resetQuery()" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm">Réinitialiser tous les filtres</button>
+  </div>
+  
   <!-- Types -->
   <div>
     <label class="block font-semibold mb-2">Types</label>
     <div class="flex flex-wrap gap-2">
       {% for type in available_query.type %}
       <label class="flex items-center space-x-2">
-        <input type="checkbox" name="type" value="{{ type }}" {% if alert.query.type and type in alert.query.type %}checked{% endif %} />
+        <input type="checkbox" name="type" value="{{ type }}" {% if alert.query.type and type in alert.query.type %}checked{% endif %} class="query-param" data-param-type="type" />
         <span>{{ type }}</span>
       </label>
       {% endfor %}
@@ -50,7 +58,7 @@
     <div class="flex flex-wrap gap-2">
       {% for status in available_query.status %}
       <label class="flex items-center space-x-2">
-        <input type="checkbox" name="status" value="{{ status }}" {% if alert.query.status and status in alert.query.status %}checked{% endif %} />
+        <input type="checkbox" name="status" value="{{ status }}" {% if alert.query.status and status in alert.query.status %}checked{% endif %} class="query-param" data-param-type="status" />
         <span>{{ status }}</span>
       </label>
       {% endfor %}
@@ -61,7 +69,7 @@
   <div>
     <label class="block font-semibold mb-2">Programme Cadre</label>
     <input type="text" placeholder="Rechercher..." class="w-full border rounded p-2 mb-2" oninput="filterDropdown('frameworkProgramme', this.value)" />
-    <select name="frameworkProgramme" id="frameworkProgramme" class="w-full border rounded p-2">
+    <select name="frameworkProgramme" id="frameworkProgramme" class="w-full border rounded p-2 query-param" data-param-type="select">
       <option value="">-- Sélectionnez --</option>
       {% for programme in available_query.frameworkProgramme %}
       <option value="{{ programme }}" {% if alert.query.frameworkProgramme and programme == alert.query.frameworkProgramme %}selected{% endif %}>{{ programme }}</option>
@@ -73,7 +81,7 @@
   <div>
     <label class="block font-semibold mb-2">Identifiant de l'Appel</label>
     <input type="text" placeholder="Rechercher..." class="w-full border rounded p-2 mb-2" oninput="filterDropdown('callIdentifier', this.value)" />
-    <select name="callIdentifier" id="callIdentifier" class="w-full border rounded p-2">
+    <select name="callIdentifier" id="callIdentifier" class="w-full border rounded p-2 query-param" data-param-type="select">
       <option value="">-- Sélectionnez --</option>
       {% for identifier in available_query.callIdentifier %}
       <option value="{{ identifier }}" {% if alert.query.callIdentifier and identifier == alert.query.callIdentifier %}selected{% endif %}>{{ identifier }}</option>
@@ -85,8 +93,8 @@
   <div>
     <label class="block font-semibold mb-2">Plage de Date de Début</label>
     <div class="flex space-x-2">
-      <input type="date" name="startDate_start" value="{{ alert.query.startDate.start if alert.query and alert.query.startDate and alert.query.startDate.start else '' }}" class="w-full border rounded p-2" />
-      <input type="date" name="startDate_end" value="{{ alert.query.startDate.end if alert.query and alert.query.startDate and alert.query.startDate.end else '' }}" class="w-full border rounded p-2" />
+      <input type="date" name="startDate_start" value="{{ alert.query.startDate.start if alert.query and alert.query.startDate and alert.query.startDate.start else '' }}" class="w-full border rounded p-2 query-param" data-param-type="date" />
+      <input type="date" name="startDate_end" value="{{ alert.query.startDate.end if alert.query and alert.query.startDate and alert.query.startDate.end else '' }}" class="w-full border rounded p-2 query-param" data-param-type="date" />
     </div>
   </div>
 
@@ -94,16 +102,61 @@
   <div>
     <label class="block font-semibold mb-2">Plage de Date Limite</label>
     <div class="flex space-x-2">
-      <input type="date" name="deadlineDate_start" value="{{ alert.query.deadlineDate.start if alert.query.deadlineDate and alert.query.deadlineDate.start else '' }}" class="w-full border rounded p-2" />
-      <input type="date" name="deadlineDate_end" value="{{ alert.query.deadlineDate.end if alert.query.deadlineDate and alert.query.deadlineDate.end else '' }}" class="w-full border rounded p-2" />
+      <input type="date" name="deadlineDate_start" value="{{ alert.query.deadlineDate.start if alert.query.deadlineDate and alert.query.deadlineDate.start else '' }}" class="w-full border rounded p-2 query-param" data-param-type="date" />
+      <input type="date" name="deadlineDate_end" value="{{ alert.query.deadlineDate.end if alert.query.deadlineDate and alert.query.deadlineDate.end else '' }}" class="w-full border rounded p-2 query-param" data-param-type="date" />
     </div>
   </div>
 
   <!-- Text Search -->
   <div>
     <label class="block font-semibold mb-2">Recherche Texte</label>
-    <input type="text" name="text_search" value="{{ alert.query.text_search if alert.query and alert.query.text_search else '' }}" class="w-full border rounded p-2" />
+    <input type="text" name="text_search" value="{{ alert.query.text_search if alert.query and alert.query.text_search else '' }}" class="w-full border rounded p-2 query-param" data-param-type="text" />
   </div>
 
   <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition mt-6">Enregistrer</button>
 </form>
+
+<script>
+  function resetMessage() {
+    const defaultMessage = "<strong>{title}</strong>\r\n{summary}\r\n\r\nStarting date : <em>{starting_date}</em>\r\nDeadline: <em>{deadline}</em>\r\n\r\nType : {type}\r\nStatus: {status}\r\n\r\nFramework programme : {frameworkProgramme}\r\n\r\nMore information : {url}";
+    
+    const textarea = document.getElementById('message-textarea');
+    textarea.value = defaultMessage;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    
+    // Affiche un message de confirmation sans soumettre le formulaire
+    alert("Le message a été réinitialisé. N'oubliez pas d'enregistrer pour appliquer les changements.");
+  }
+  
+  function resetQuery() {
+    // Réinitialiser les types (1, 8, 2)
+    const defaultTypes = ["1", "8", "2"];
+    document.querySelectorAll('input[name="type"]').forEach(checkbox => {
+      checkbox.checked = defaultTypes.includes(checkbox.value);
+    });
+    
+    // Réinitialiser les status (31094503, 31094502, 31094501)
+    const defaultStatus = ["31094503", "31094502", "31094501"];
+    document.querySelectorAll('input[name="status"]').forEach(checkbox => {
+      checkbox.checked = defaultStatus.includes(checkbox.value);
+    });
+    
+    // Réinitialiser les autres champs de recherche
+    document.querySelectorAll('select.query-param').forEach(select => {
+      select.value = '';
+    });
+    
+    document.querySelectorAll('input.query-param[type="date"], input.query-param[type="text"]').forEach(input => {
+      input.value = '';
+    });
+    
+    // Affiche un message de confirmation sans soumettre le formulaire
+    alert("Les paramètres de recherche ont été réinitialisés. N'oubliez pas d'enregistrer pour appliquer les changements.");
+  }
+  
+  // Existing function
+  function filterDropdown(id, query) {
+    // ...existing code...
+  }
+</script>

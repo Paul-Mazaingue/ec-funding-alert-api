@@ -22,8 +22,8 @@
                         "terms": {
                             "type": [
                                 "1",
-                                "8",
-                                "2"
+                                "2",
+                                "8"
                             ]
                         }
                     },
@@ -169,158 +169,7 @@
                 ]
             }
         },
-        "lastDetails": [
-            {
-                "title": [
-                    "HVAC, HVDC and High-Power cable systems"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-15",
-                "identifier": "HORIZON-CL5-2024-D3-01-15",
-                "reference": "45645083HORIZONResearchandInnovationActions1694476800000",
-                "summary": "HVAC, HVDC and High-Power cable systems",
-                "retrieved_at": "13-05-2025 14:06:56"
-            },
-            {
-                "title": [
-                    "Development and integration of advanced software tools in SCADA systems for High, Medium and Low voltage AC/DC hybrid systems"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-17",
-                "identifier": "HORIZON-CL5-2024-D3-01-17",
-                "reference": "45643566HORIZONInnovationActions1694476800000",
-                "summary": "Development and integration of advanced software tools in SCADA systems for High, Medium and Low voltage AC/DC hybrid systems",
-                "retrieved_at": "13-05-2025 14:06:56"
-            },
-            {
-                "title": [
-                    "HVAC, HVDC and High-Power cable systems"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-15",
-                "identifier": "HORIZON-CL5-2024-D3-01-15",
-                "reference": "45645083HORIZONResearchandInnovationActions1694476800000",
-                "summary": "HVAC, HVDC and High-Power cable systems",
-                "retrieved_at": "13-05-2025 13:56:55"
-            },
-            {
-                "title": [
-                    "Development and integration of advanced software tools in SCADA systems for High, Medium and Low voltage AC/DC hybrid systems"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-17",
-                "identifier": "HORIZON-CL5-2024-D3-01-17",
-                "reference": "45643566HORIZONInnovationActions1694476800000",
-                "summary": "Development and integration of advanced software tools in SCADA systems for High, Medium and Low voltage AC/DC hybrid systems",
-                "retrieved_at": "13-05-2025 13:56:55"
-            },
-            {
-                "title": [
-                    "Development and integration of advanced software tools in SCADA systems for High, Medium and Low voltage AC/DC hybrid systems"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-17",
-                "identifier": "HORIZON-CL5-2024-D3-01-17",
-                "reference": "45643566HORIZONInnovationActions1694476800000",
-                "summary": "Development and integration of advanced software tools in SCADA systems for High, Medium and Low voltage AC/DC hybrid systems",
-                "retrieved_at": "13-05-2025 13:42:51"
-            },
-            {
-                "title": [
-                    "HVAC, HVDC and High-Power cable systems"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-15",
-                "identifier": "HORIZON-CL5-2024-D3-01-15",
-                "reference": "45645083HORIZONResearchandInnovationActions1694476800000",
-                "summary": "HVAC, HVDC and High-Power cable systems",
-                "retrieved_at": "13-05-2025 13:42:03"
-            },
-            {
-                "title": [
-                    "Demonstration of sustainable wave energy farms"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-08",
-                "identifier": "HORIZON-CL5-2024-D3-01-08",
-                "reference": "45645535HORIZONInnovationActions1694476800000",
-                "summary": "Demonstration of sustainable wave energy farms",
-                "retrieved_at": "13-05-2025 13:42:03"
-            },
-            {
-                "title": [
-                    "Demonstration of sustainable wave energy farms"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-08",
-                "identifier": "HORIZON-CL5-2024-D3-01-08",
-                "reference": "45645535HORIZONInnovationActions1694476800000",
-                "summary": "Demonstration of sustainable wave energy farms",
-                "retrieved_at": "13-05-2025 13:38:30"
-            },
-            {
-                "title": [
-                    "Condition & Health Monitoring in Power Electronics (PE) - Wide Band Gap PE for the energy sector"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-14",
-                "identifier": "HORIZON-CL5-2024-D3-01-14",
-                "reference": "45645052HORIZONResearchandInnovationActions1694476800000",
-                "summary": "Condition &amp; Health Monitoring in Power Electronics (PE) - Wide Band Gap PE for the energy sector",
-                "retrieved_at": "13-05-2025 13:37:56"
-            },
-            {
-                "title": [
-                    "AI Testing and Experimentation Facility (TEF) for the energy sector – bringing technology to the market"
-                ],
-                "starting_date": "12-09-2023",
-                "deadline": "16-01-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL5-2024-D3-01-11",
-                "identifier": "HORIZON-CL5-2024-D3-01-11",
-                "reference": "45644263HORIZONInnovationActions1694476800000",
-                "summary": "AI Testing and Experimentation Facility (TEF) for the energy sector – bringing technology to the market",
-                "retrieved_at": "13-05-2025 12:56:23"
-            }
-        ],
+        "lastDetails": [],
         "totalResults": 17
     },
     {
@@ -1945,7 +1794,7 @@
             "languages": "config/languages.json",
             "sort": "config/sort.json"
         },
-        "message": "<strong>{title}</strong>\r\n{summary}\r\n\r\nStarting date : <em>{starting_date}</em>\r\nDeadline: <em>{deadline}</em>\r\n\r\nType : {type}\r\nStatus: {status}\r\n\r\nFramework programme : {frameworkProgramme}\r\n\r\nMore information : {url}",
+        "message": "<strong>{title}</strong>\r\n{summary}\r\n\r\n\r\nFramework programme : {frameworkProgramme}\r\n\r\nMore information : {url}",
         "keywords": [
             "public"
         ],
