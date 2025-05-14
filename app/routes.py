@@ -6,9 +6,15 @@ from src.fetch import get_total_results
 from src.utils import load_json, save_json
 from src.query import generate_query
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 import os
-import logging  # Add this import
+import logging  
+
+TYPE_MAPPINGS: Dict[str, str] = {
+    "1": "Direct calls for proposals (issued by the EU)",
+    "2": "EU External Actions",
+    "8": "Calls for funding in cascade (issued by funded projects)"
+}
 
 ALERTS_PATH = "config/alerts.json"
 DATA_FOLDER = "data"
@@ -135,9 +141,10 @@ async def update_alert(
                 
         logging.warning(f"Could not parse date: {date_str}")
         return None
-    
+
+    mapped_types = [k for t in type for k, v in TYPE_MAPPINGS.items() if v == t.strip()]
     query = generate_query(
-        types=[get_rawValue_from_value(t.strip(), "type") for t in type if t],
+        types=mapped_types,
         statuses=[get_rawValue_from_value(s.strip(), "status") for s in status if s],
         framework_programmes=get_rawValue_from_value(frameworkProgramme.strip(), "frameworkProgramme") if frameworkProgramme else None,
         call_identifier=get_rawValue_from_value(callIdentifier.strip(), "callIdentifier") if callIdentifier else None,
@@ -208,7 +215,7 @@ def load_config(alert_name):
     details = alert.get("lastDetails", [])
     total_results = alert.get("totalResults", 0)
     available_query = {
-        "type": get_all_values("type"),
+        "type": ["Direct calls for proposals (issued by the EU)", "EU External Actions", "Calls for funding in cascade (issued by funded projects)"],
         "status": get_all_values("status"),
         "frameworkProgramme": get_all_values("frameworkProgramme"),
         "callIdentifier": get_all_values("callIdentifier"),
@@ -239,7 +246,7 @@ def transform_query(raw_query):
     for condition in raw_query.get("bool", {}).get("must", []):
         if "terms" in condition:
             if "type" in condition["terms"]:
-                query["type"] = [get_value_from_rawValue(raw, "type") for raw in condition["terms"]["type"]]
+                query["type"] = [TYPE_MAPPINGS.get(raw, raw) for raw in condition["terms"]["type"]]
             if "status" in condition["terms"]:
                 query["status"] = [get_value_from_rawValue(raw, "status") for raw in condition["terms"]["status"]]
         if "text" in condition:

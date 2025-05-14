@@ -1956,8 +1956,8 @@
                         "terms": {
                             "type": [
                                 "1",
-                                "8",
-                                "2"
+                                "2",
+                                "8"
                             ]
                         }
                     },
@@ -2085,98 +2085,7 @@
                 ]
             }
         },
-        "lastDetails": [
-            {
-                "title": [
-                    "Unlock the potential of the New European Bauhaus in urban food system transformation"
-                ],
-                "starting_date": "17-10-2023",
-                "deadline": "22-02-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL6-2024-COMMUNITIES-01-1",
-                "identifier": "HORIZON-CL6-2024-COMMUNITIES-01-1",
-                "reference": "45656942HORIZONInnovationActions1697500800000",
-                "summary": "Unlock the potential of the New European Bauhaus in urban food system transformation",
-                "retrieved_at": "14-05-2025 13:42:40"
-            },
-            {
-                "title": [
-                    "Trustworthy open search and discovery (RIA)"
-                ],
-                "starting_date": "20-02-2024",
-                "deadline": "04-04-2024",
-                "type": "Cascade funding",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/competitive-calls-cs/5284",
-                "identifier": "HORIZON-CL4-2021-HUMAN-01-05",
-                "reference": "5284COMPETITIVE_CALLen",
-                "summary": "Community Program of OpenWebSearch.EU Project: 2nd Open Call for the Third-Parties 'Applications of an Open Web Index'",
-                "retrieved_at": "14-05-2025 13:42:40"
-            },
-            {
-                "title": [
-                    "Trustworthy open search and discovery (RIA)"
-                ],
-                "starting_date": "20-02-2024",
-                "deadline": "04-04-2024",
-                "type": "Cascade funding",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/competitive-calls-cs/5285",
-                "identifier": "HORIZON-CL4-2021-HUMAN-01-05",
-                "reference": "5285COMPETITIVE_CALLen",
-                "summary": "Community Program of OpenWebSearch.EU Project: 3rd Open Call for the Third-Parties \"Data Centre on-boarding\"",
-                "retrieved_at": "14-05-2025 13:42:40"
-            },
-            {
-                "title": [
-                    "Transition towards high performance of air-ground connectivity (multilink)"
-                ],
-                "starting_date": "01-04-2025",
-                "deadline": "16-09-2025",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Open for submission",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-SESAR-2025-DES-IR-02-WA2-1",
-                "identifier": "HORIZON-SESAR-2025-DES-IR-02-WA2-1",
-                "reference": "47761664TOPICSen",
-                "summary": "Transition towards high performance of air-ground connectivity (multilink)",
-                "retrieved_at": "14-05-2025 13:42:40"
-            },
-            {
-                "title": [
-                    "Transformative action of policy mixes, governance and digitalisation addressing biodiversity loss"
-                ],
-                "starting_date": "17-10-2023",
-                "deadline": "22-02-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL6-2024-BIODIV-01-5",
-                "identifier": "HORIZON-CL6-2024-BIODIV-01-5",
-                "reference": "45655433HORIZONResearchandInnovationActions1697500800000",
-                "summary": "Transformative action of policy mixes, governance and digitalisation addressing biodiversity loss",
-                "retrieved_at": "14-05-2025 13:42:40"
-            },
-            {
-                "title": [
-                    "Thematic network tackling food fraud by translating research and innovation into practice"
-                ],
-                "starting_date": "17-10-2023",
-                "deadline": "22-02-2024",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon Europe (HORIZON)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/HORIZON-CL6-2024-FARM2FORK-01-3",
-                "identifier": "HORIZON-CL6-2024-FARM2FORK-01-3",
-                "reference": "45654073HORIZONCoordinationandSupportActions1697500800000",
-                "summary": "Thematic network tackling food fraud by translating research and innovation into practice",
-                "retrieved_at": "14-05-2025 13:42:40"
-            }
-        ],
+        "lastDetails": [],
         "totalResults": 374
     }
 ]
