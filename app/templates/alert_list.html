@@ -1,0 +1,13 @@
+<div class="space-y-6">
+  <h2 class="text-2xl font-bold text-blue-700 mb-4">Dernières alertes</h2>
+  <ul class="space-y-4">
+    {% for detail in alert.details %}
+      <li class="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition">
+        <span class="text-gray-700">
+          Détecté le: <strong>{{ detail.retrieved_at }}</strong> <br>
+          {{ alert.message | replace('{title}', detail.title | join('')) | replace('{starting_date}', detail.starting_date) | replace('{deadline}', detail.deadline) | replace('{type}', detail.type) | replace('{status}', detail.status) | replace('{url}', '<a href="' ~ detail.url ~ '" class="text-blue-600 underline" target="_blank">' ~ detail.url ~ '</a>') | replace('{identifier}', detail.identifier) | replace('{reference}', detail.reference) | replace('{summary}', detail.summary) | replace('{frameworkProgramme}', detail.frameworkProgramme) | replace('\n', '<br>') | safe }}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

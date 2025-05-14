@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Veille Appels d'Offres</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .form-section {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .form-section:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    .tab {
+      transition: all 0.3s ease;
+    }
+    .tab.active {
+      border-bottom: 3px solid #1d4ed8;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    @media (max-width: 768px) {
+      .sidebar-container {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        width: 80%;
+        z-index: 50;
+        transition: left 0.3s ease;
+      }
+      .sidebar-container.open {
+        left: 0;
+      }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="flex flex-col md:flex-row h-screen">
+    <!-- Sidebar toggle button (mobile only) -->
+    <button id="sidebar-toggle" class="md:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-md">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+    
+    <!-- Sidebar overlay (mobile only) -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar-container" class="sidebar-container md:w-64 bg-white md:static md:block h-full overflow-hidden">
+      {% include "sidebar.html" %}
+    </div>
+    
+    <!-- Main content -->
+    <div class="flex-1 overflow-y-auto p-4">
+      <h1 class="text-3xl font-extrabold text-center text-blue-700 mb-6">Veille Appels d'Offres</h1>
+      
+      <!-- Tabs Navigation -->
+      <div class="border-b border-gray-200 mb-6">
+        <ul class="flex space-x-8">
+          <li>
+            <button id="tab-config" class="tab active py-4 px-2" onclick="switchTab('config')">
+              Configuration
+            </button>
+          </li>
+          <li>
+            <button id="tab-alerts" class="tab py-4 px-2" onclick="switchTab('alerts')">
+              Dernières alertes
+            </button>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Tab Contents -->
+      <div id="content-config" class="tab-content active">
+        {% block config_content %}{% endblock %}
+      </div>
+      
+      <div id="content-alerts" class="tab-content">
+        {% block alerts_content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function switchTab(tabId) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Deactivate all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Activate selected tab and content
+      document.getElementById(`content-${tabId}`).classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+    
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar-container');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+    
+    // Additional JavaScript functions can be placed here
+    function filterDropdown(id, value) {
+      const select = document.getElementById(id);
+      const options = select.querySelectorAll('option');
+      options.forEach(option => {
+        if (option.textContent.toLowerCase().includes(value.toLowerCase()) || option.value === "") {
+          option.style.display = "";
+        } else {
+          option.style.display = "none";
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.datepicker').forEach(input => {
+        input.addEventListener('focus', function() {
+          this.type = 'date';
+        });
+        input.addEventListener('blur', function() {
+          if (!this.value) this.type = 'text';
+        });
+      });
+      
+      // Initialize textarea height
+      const textarea = document.querySelector('textarea[name="message"]');
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+      
+      // Initialize sidebar toggle button
+      document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<div class="sidebar bg-white shadow-md rounded-lg p-4 h-full flex flex-col">
+  <h2 class="text-xl font-bold mb-4 text-blue-700">Mes Alertes</h2>
+  
+  <!-- Liste des alertes avec défilement si besoin -->
+  <div class="flex-grow overflow-y-auto mb-4">
+    <ul class="space-y-2">
+      {% for alert_item in alerts %}
+        <li class="relative group">
+          <a href="/?alert={{ alert_item.name }}" 
+             class="block w-full rounded-md py-3 px-3 cursor-pointer {{ 'bg-blue-100' if alert_item.name == current_alert else 'hover:bg-gray-100' }}">
+            <span class="pr-6">{{ alert_item.name }}</span>
+          </a>
+          <button 
+            onclick="event.stopPropagation(); confirmDeleteAlert('{{ alert_item.name }}')" 
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500 transition-colors"
+            title="Supprimer cette alerte"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  
+  <!-- Formulaire de création d'alerte fixé au bas de la sidebar -->
+  <div class="border-t pt-4 mt-auto">
+    <h3 class="text-sm font-medium mb-2 text-gray-700">Nouvelle alerte</h3>
+    <form action="/create-alert" method="post" class="flex space-x-2">
+      <input 
+        type="text" 
+        name="new_alert_name" 
+        placeholder="Nom de l'alerte" 
+        class="flex-grow min-w-0 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        required
+      />
+      <button 
+        type="submit" 
+        class="whitespace-nowrap bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700 transition"
+      >
+        Créer
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function confirmDeleteAlert(alertName) {
+    if (confirm("Voulez-vous vraiment supprimer cette alerte ?")) {
+      window.location.href = `/delete-alert?name=${encodeURIComponent(alertName)}`;
+    }
+  }
+</script>

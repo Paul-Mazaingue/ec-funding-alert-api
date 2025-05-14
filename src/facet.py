@@ -1,114 +1,211 @@
-import json
-import requests
-import aiohttp
 import asyncio
-from typing import List, Dict, Optional
-from .utils import load_json, save_json
+import json
+import logging
+import os
+from typing import Any, Dict, List, Optional, Union
 
-URL = "https://api.tech.ec.europa.eu/search-api/prod/rest/facet"
-PARAMS = {"apiKey": "SEDIA", "text": "***"}
-CONFIG_DIR = "config"
-DATA_DIR = "data"
+from .request import request_api_async
+from .utils import load_json
 
-def transform_facets(data: Dict, output_file: str):
-    output = []
+# Configure logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# API endpoints and parameters
+FACET_API_URL = "https://api.tech.ec.europa.eu/search-api/prod/rest/facet"
+FACET_API_PARAMS = {"apiKey": "SEDIA", "text": "***"}
+
+# File paths configuration
+CONFIG_PATHS = {
+    'query': 'config/facet.json',
+    'languages': 'config/languages.json'
+}
+FACET_DATA_PATH = 'data/facet.json'
+
+# Type definitions
+FacetEntry = Dict[str, str]
+FacetList = List[Dict[str, List[FacetEntry]]]
+
+
+def transform_facets(data: Dict[str, Any], output_file: str) -> None:
+    """
+    Transforms facet data into a simplified format and saves it to a JSON file.
+    
+    Args:
+        data: Raw facet data from the API
+        output_file: Path to save the transformed data
+    """
+    output: FacetList = []
+    
     for facet in data.get('facets', []):
         name = facet.get('name')
+        if not name:
+            logger.warning("Facet without a name was ignored.")
+            continue
+            
         entries = [
             {
-                "rawValue": value["rawValue"],
-                "value": value["value"]
+                "rawValue": value.get("rawValue"),
+                "value": value.get("value")
             }
             for value in facet.get("values", [])
+            if "rawValue" in value and "value" in value
         ]
+        
         output.append({name: entries})
 
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(output, f, indent=4, ensure_ascii=False)
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(output, f, indent=4, ensure_ascii=False)
+        logger.info(f"Facets transformed and saved to {output_file}")
+    except Exception as e:
+        logger.error(f"Error saving file {output_file}: {e}")
 
-def build_files() -> List[tuple]:
-    return [
-        ('query', (f'{CONFIG_DIR}/facet.json', open(f'{CONFIG_DIR}/facet.json', 'rb'), 'application/json')),
-        ('languages', (f'{CONFIG_DIR}/languages.json', open(f'{CONFIG_DIR}/languages.json', 'rb'), 'application/json'))
-    ]
 
-async def request_api_async(url: str, params: Dict, retries: int = 3, timeout: int = 30) -> Optional[Dict]:
-    timeout_obj = aiohttp.ClientTimeout(total=timeout)
+async def request_facet_api(output_file: str = FACET_DATA_PATH) -> bool:
+    """
+    Calls the facet API and saves the transformed response to a file.
+    
+    Args:
+        output_file: Path to save the transformed data
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        result = await request_api_async(FACET_API_URL, FACET_API_PARAMS, CONFIG_PATHS)
+    except Exception as e:
+        logger.error(f"Error calling API: {e}", exc_info=True)
+        return False
 
-    for attempt in range(1, retries + 1):
-        files = build_files()  # Rebuild files on each attempt
-        data = aiohttp.FormData()
-        for key, (filename, file, content_type) in files:
-            data.add_field(key, file, filename=filename, content_type=content_type)
+    if not result:
+        logger.error("No results received from API.")
+        return False
+        
+    transform_facets(result, output_file)
+    return True
 
-        async with aiohttp.ClientSession(timeout=timeout_obj) as session:
-            try:
-                async with session.post(url, params=params, data=data) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        print(f"[{attempt}/{retries}] API Error {response.status}: {error_text[:300]}")
-                        await asyncio.sleep(2 * attempt)
-                        continue
 
-                    text = await response.text()
-                    print(f"[{attempt}/{retries}] Response length: {len(text)} chars")
-
-                    try:
-                        return json.loads(text)
-                    except json.JSONDecodeError as e:
-                        print(f"[{attempt}/{retries}] JSON decode error: {e}")
-                        print(f"Truncated response: {text[:500]}")
-                        await asyncio.sleep(2 * attempt)
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                print(f"[{attempt}/{retries}] Request failed: {repr(e)}")
-                await asyncio.sleep(2 * attempt)
-            finally:
-                for _, f in files:
-                    f[1].close()
-
-    print(f"All {retries} attempts failed for URL: {url}")
-    return None
-
-def get_value_from_rawValue(rawValue: str, facet_name: str) -> str:
-    facet = load_json(f'{DATA_DIR}/facet.json')
-    facet_data = next((item for item in facet if facet_name in item), None)
-    if not facet_data:
-        print(f"Error: '{facet_name}' not found in facet.json")
+def _load_facet_data(filepath: str = FACET_DATA_PATH) -> Optional[FacetList]:
+    """
+    Loads facet data from a JSON file.
+    
+    Args:
+        filepath: Path to the facet data file
+        
+    Returns:
+        List of facet entries or None if loading failed
+    """
+    try:
+        if not os.path.exists(filepath):
+            logger.warning(f"Facet data file {filepath} not found.")
+            return None
+            
+        return load_json(filepath)
+    except Exception as e:
+        logger.error(f"Error loading {filepath}: {e}", exc_info=True)
         return None
-    for item in facet_data[facet_name]:
+
+
+def get_value_from_rawValue(rawValue: str, facet_name: str) -> Optional[str]:
+    """
+    Returns the readable value associated with a rawValue for a given facet.
+    
+    Args:
+        rawValue: The raw value to look up
+        facet_name: Name of the facet to search in
+        
+    Returns:
+        The human-readable value, the original rawValue if not found, or None on error
+    """
+    facet_data = _load_facet_data()
+    if not facet_data:
+        logger.error("No facet data available.")
+        return None
+        
+    # Find the facet by name
+    facet_entry = _find_facet_by_name(facet_data, facet_name)
+    if not facet_entry:
+        return None
+        
+    # Find the value with matching rawValue
+    for item in facet_entry[facet_name]:
         if item.get('rawValue') == rawValue:
             return item.get('value')
+            
+    logger.warning(f"rawValue '{rawValue}' not found for facet '{facet_name}'")
     return rawValue
 
-def get_rawValue_from_value(value: str, facet_name: str) -> str:
-    facet = load_json(f'{DATA_DIR}/facet.json')
-    facet_data = next((item for item in facet if facet_name in item), None)
+
+def get_rawValue_from_value(value: str, facet_name: str) -> Optional[str]:
+    """
+    Returns the rawValue associated with a readable value for a given facet.
+    
+    Args:
+        value: The human-readable value to look up
+        facet_name: Name of the facet to search in
+        
+    Returns:
+        The raw value, the original value if not found, or None on error
+    """
+    facet_data = _load_facet_data()
     if not facet_data:
-        print(f"Error: '{facet_name}' not found in facet.json")
+        logger.error("No facet data available.")
         return None
-    for item in facet_data[facet_name]:
+        
+    # Find the facet by name
+    facet_entry = _find_facet_by_name(facet_data, facet_name)
+    if not facet_entry:
+        return None
+        
+    # Find the rawValue with matching value
+    for item in facet_entry[facet_name]:
         if item.get('value') == value:
             return item.get('rawValue')
+            
+    logger.warning(f"Value '{value}' not found for facet '{facet_name}'")
     return value
 
-def get_all_values(facet_name: str) -> List[str]:
-    facet = load_json(f'{DATA_DIR}/facet.json')
-    facet_data = next((item for item in facet if facet_name in item), None)
-    if not facet_data:
-        print(f"Error: '{facet_name}' not found in facet.json")
-        return []
-    return [item.get('value') for item in facet_data[facet_name]]
 
-if __name__ == "__main__":
-    print(get_value_from_rawValue("43108390", "frameworkProgramme"))
-    print(get_rawValue_from_value("Horizon Europe (HORIZON)", "frameworkProgramme"))
-    #loop = asyncio.get_event_loop()
-    #result = loop.run_until_complete(request_api_async(URL, PARAMS))
-    #if result:
-    #    print("API response received successfully.")
-    #    # Process the result as needed
-    #    # For example, save it to a file or print it
-    #    transform_facets(result, DATA_DIR+'/facet.json')
-    #else:
-    #    print("Failed to get a valid response from the API.")
+def get_all_values(facet_name: str) -> List[str]:
+    """
+    Returns all readable values for a given facet.
+    
+    Args:
+        facet_name: Name of the facet to get values from
+        
+    Returns:
+        List of all human-readable values for the facet, or empty list on error
+    """
+    facet_data = _load_facet_data()
+    if not facet_data:
+        logger.error("No facet data available.")
+        return []
+        
+    facet_entry = _find_facet_by_name(facet_data, facet_name)
+    if not facet_entry:
+        return []
+        
+    return [item.get('value') for item in facet_entry[facet_name] if 'value' in item]
+
+
+def _find_facet_by_name(facet_data: FacetList, facet_name: str) -> Optional[Dict[str, List[FacetEntry]]]:
+    """
+    Helper function to find a facet by name in the facet data.
+    
+    Args:
+        facet_data: List of facet entries
+        facet_name: Name of the facet to find
+        
+    Returns:
+        The facet entry or None if not found
+    """
+    facet_entry = next((item for item in facet_data if facet_name in item), None)
+    if not facet_entry:
+        logger.error(f"Facet '{facet_name}' not found in {FACET_DATA_PATH}")
+        return None
+        
+    return facet_entry

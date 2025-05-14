@@ -1,273 +1,456 @@
-import requests
-import logging
-from typing import List, Dict, Optional
-import json
-
-from .utils import load_json, save_json
-from .alert import send_email_alert
-from .facet import get_value_from_rawValue, get_rawValue_from_value
 import asyncio
-import aiohttp
+import json
+import logging
+import os
+import uuid
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
-CONFIG_DIR = "config"
-DATA_FILE = "data/all_references.json"
+from .facet import get_value_from_rawValue
+from .request import request_api_async
+from .utils import load_json, save_json
 
-def build_files() -> List[tuple]:
-    return [
-        ('query', (f'{CONFIG_DIR}/query.json', open(f'{CONFIG_DIR}/query.json', 'rb'), 'application/json')),
-        ('languages', (f'{CONFIG_DIR}/languages.json', open(f'{CONFIG_DIR}/languages.json', 'rb'), 'application/json')),
-        ('sort', (f'{CONFIG_DIR}/sort.json', open(f'{CONFIG_DIR}/sort.json', 'rb'), 'application/json'))
-    ]
+# =========================
+# Configuration & Constants
+# =========================
 
-def request_api(url: str, params: Dict) -> Optional[requests.Response]:
-    files = build_files()
+# API configuration
+API_URL: str = "https://api.tech.ec.europa.eu/search-api/prod/rest/search"
+API_PARAMS: Dict[str, str] = {"apiKey": "SEDIA", "text": "***"}
+
+# Request configuration
+SIMULTANEOUS_REQUESTS: int = 3
+PAGE_SIZE: int = 100
+DATAFOLDER: str = "data"
+ALERTS_SUBFOLDER: str = f"{DATAFOLDER}/alerts"
+
+# Type mappings
+TYPE_MAPPINGS: Dict[str, str] = {
+    "1": "Direct calls for proposals (issued by the EU)",
+    "2": "EU External Actions",
+    "8": "Cascade funding"
+}
+
+# Configure logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ===========================
+# Utility & Helper Functions
+# ===========================
+
+def filter_results_by_keywords(
+    results: List[Dict[str, Any]], 
+    keywords: List[str]
+) -> List[Dict[str, Any]]:
+    """
+    Filter results based on the presence of keywords in the 'descriptionByte' field.
+    
+    Args:
+        results: List of API results to filter
+        keywords: List of keywords to search for
+        
+    Returns:
+        Filtered list of results containing at least one keyword
+    """
+    if not keywords:
+        return results
+
+    filtered: List[Dict[str, Any]] = []
+    for result in results:
+        metadata = result.get("metadata", {})
+        description = metadata.get("descriptionByte")
+        
+        if description is None:
+            filtered.append(result)
+            continue
+            
+        # Normalize description to string
+        if isinstance(description, list):
+            description_text = " ".join(description).lower()
+        else:
+            description_text = str(description).lower()
+            
+        if any(keyword.lower() in description_text for keyword in keywords):
+            filtered.append(result)
+            
+    return filtered
+
+
+def add_identifiers_to_query(
+    query: Dict[str, Any], 
+    identifiers: str
+) -> Dict[str, Any]:
+    """
+    Add identifiers to the query for filtering.
+    
+    Args:
+        query: Original query object
+        identifiers: Comma-separated list of identifiers
+        
+    Returns:
+        Query with added identifier filters
+    """
+    if not query:
+        return {}
+    if not identifiers:
+        return query
+
+    # Make a deep copy of the query to avoid modifying the original
+    query_copy = json.loads(json.dumps(query))
+    
+    identifiers_list = [identifier.strip() for identifier in identifiers.split(",") if identifier.strip()]
+    for identifier in identifiers_list:
+        query_copy.setdefault("bool", {}).setdefault("must", []).append({
+            "text": {
+                "query": identifier,
+                "fields": ["identifier"],
+                "defaultOperator": "AND"
+            }
+        })
+    return query_copy
+
+
+def format_date(date_str: Optional[Union[str, list]]) -> str:
+    """
+    Format a date string from API format to 'dd-mm-yyyy'.
+    
+    Args:
+        date_str: Date string or list of date strings from API
+        
+    Returns:
+        Formatted date string or empty string if parsing fails
+    """
+    if not date_str:
+        return ""
+        
+    if isinstance(date_str, list):
+        date_str = date_str[0]
+        
     try:
-        response = requests.post(url, params=params, files=files)
-        if response.status_code != 200:
-            logging.error(f"API Error {response.status_code}: {response.text}")
-            return None
-        return response
-    except requests.RequestException as e:
-        logging.error(f"API request failed: {e}")
+        date_obj = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f%z")
+        return date_obj.strftime("%d-%m-%Y")
+    except Exception:
+        return str(date_str)
+
+
+def map_type(type_code: str) -> str:
+    """
+    Maps type codes to human-readable descriptions.
+    
+    Args:
+        type_code: Type code from the API
+        
+    Returns:
+        Human-readable description of the type
+    """
+    return TYPE_MAPPINGS.get(type_code, "Other")
+
+
+# ===========================
+# Main Fetching Functionality
+# ===========================
+
+async def fetch_all_calls(alert: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    """
+    Fetch all calls from the API, filtered by keywords if provided.
+    
+    Args:
+        alert: Alert configuration containing file paths and keywords
+        
+    Returns:
+        List of dicts with 'reference' and 'identifier' or None if failed
+    """
+    keywords: List[str] = alert.get("keywords", [])
+    all_refs: List[Dict[str, Any]] = []
+
+    try:
+        response = await request_api_async(API_URL, API_PARAMS, alert.get("file_paths", {}))
+    except Exception as e:
+        logger.error(f"Initial API request failed: {e}", exc_info=True)
         return None
-    finally:
-        for _, f in files:
-            f[1].close()
 
-async def request_api_async(url: str, params: Dict, retries: int = 3, timeout: int = 30) -> Optional[Dict]:
-    timeout_obj = aiohttp.ClientTimeout(total=timeout)
-
-    for attempt in range(1, retries + 1):
-        files = build_files()  # Rebuild files on each attempt
-        data = aiohttp.FormData()
-        for key, (filename, file, content_type) in files:
-            data.add_field(key, file, filename=filename, content_type=content_type)
-
-        async with aiohttp.ClientSession(timeout=timeout_obj) as session:
-            try:
-                async with session.post(url, params=params, data=data) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        logging.error(f"[{attempt}/{retries}] API Error {response.status}: {error_text[:300]}")
-                        await asyncio.sleep(2 * attempt)
-                        continue
-
-                    text = await response.text()
-                    logging.info(f"[{attempt}/{retries}] Response length: {len(text)} chars")
-
-                    try:
-                        return json.loads(text)
-                    except json.JSONDecodeError as e:
-                        logging.warning(f"[{attempt}/{retries}] JSON decode error: {e}")
-                        logging.debug(f"Truncated response: {text[:500]}")
-                        await asyncio.sleep(2 * attempt)
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                logging.error(f"[{attempt}/{retries}] Request failed: {repr(e)}")
-                await asyncio.sleep(2 * attempt)
-            finally:
-                for _, f in files:
-                    f[1].close()
-
-    logging.error(f"All {retries} attempts failed for URL: {url}")
-    return None
-
-
-async def fetch_all_references(url: str, params: Dict) -> List[Dict]:
-    config = load_json(f"{CONFIG_DIR}/config.json") or {}
-    keywords = config.get("keywords", [])
-    all_refs = []
-    response = await request_api_async(url, params)
     if not response:
-        return []
+        logger.warning("No response received from initial API request.")
+        return None
 
-    total_results = response.get("totalResults", 0)
-    page_size = 100
-    total_pages = (total_results + page_size - 1) // page_size
+    total_results: int = response.get("totalResults", 0)
+    # Store total results in the alert object for later use
+    alert["totalResults"] = total_results
+    total_pages: int = (total_results + PAGE_SIZE - 1) // PAGE_SIZE
 
-    semaphore = asyncio.Semaphore(3)  # Limit to 3 simultaneous requests
+    logger.info(f"Total results: {total_results}, Pages to fetch: {total_pages}")
 
-    async def fetch_page(page: int):
+    # Use a semaphore to limit concurrent requests
+    semaphore = asyncio.Semaphore(SIMULTANEOUS_REQUESTS)
+
+    async def fetch_page(page: int) -> List[Dict[str, Any]]:
+        """Fetch a single page of results."""
         async with semaphore:
-            paged_params = params.copy()
-            paged_params.update({"pageNumber": page, "pageSize": page_size})
-            resp = await request_api_async(url, paged_params)
-            if not resp:
-                print(f"[ERROR] Page {page} failed.")
+            paged_params = API_PARAMS.copy()
+            paged_params.update({"pageNumber": page, "pageSize": PAGE_SIZE})
+            try:
+                resp = await request_api_async(API_URL, paged_params, alert.get("file_paths", {}))
+            except Exception as e:
+                logger.error(f"API request for page {page} failed: {e}")
                 return []
-            print("Page ", page, "/", total_pages)
+            if not resp:
+                logger.error(f"Page {page} returned no response.")
+                return []
+                
+            logger.info(f"Fetched page {page}/{total_pages}")
             results = resp.get("results", [])
-            filtered_results = [
-                result for result in results
-                if any(
-                    keyword.lower() in (
-                        " ".join(result.get("metadata", {}).get("descriptionByte", []))  # Join list if descriptionByte is a list
-                        if isinstance(result.get("metadata", {}).get("descriptionByte"), list)
-                        else result.get("metadata", {}).get("descriptionByte", "").lower()
-                    )
-                    for keyword in keywords
-                )
-            ]
+            filtered_results = filter_results_by_keywords(results, keywords)
+            
             return [
-                {"reference": result.get("reference"), "identifier": result.get("metadata", {}).get("identifier")}
-                for result in filtered_results if result.get("reference") and result.get("metadata", {}).get("identifier")
+                {
+                    "reference": result.get("reference"),
+                    "identifier": result.get("metadata", {}).get("identifier")
+                }
+                for result in filtered_results
+                if result.get("reference") and result.get("metadata", {}).get("identifier")
             ]
 
-    # Process pages in batches
-    batch_size = 10
-    for i in range(0, total_pages, batch_size):
-        tasks = [fetch_page(page) for page in range(i + 1, min(i + batch_size + 1, total_pages + 1))]
-        pages = await asyncio.gather(*tasks)
-        for page_results in pages:
-            all_refs.extend(page_results)
-        await asyncio.sleep(1)  # Pause to avoid API saturation
+    # Prepare and run all page fetch tasks concurrently
+    tasks = [fetch_page(page) for page in range(1, total_pages + 1)]
+    try:
+        pages_results = await asyncio.gather(*tasks)
+    except Exception as e:
+        logger.error(f"Error during page fetching: {e}", exc_info=True)
+        return None
 
-    print("Total references fetched: ", len(all_refs))
+    # If any page failed (empty list), return None
+    if any(page_results == [] for page_results in pages_results):
+        logger.error("At least one page failed to fetch. Returning None.")
+        return None
+
+    # Combine all page results
+    for page_results in pages_results:
+        all_refs.extend(page_results)
+
+    # Pause to avoid API saturation
+    await asyncio.sleep(1)
+
+    logger.info(f"Total calls fetched: {len(all_refs)}")
     return all_refs
 
 
-def load_previous_results() -> Optional[List[Dict]]:
-    return load_json(DATA_FILE)
-
-def compare_results(old: Optional[List[Dict]], new: List[Dict]) -> Dict[str, List[Dict]]:
-    if not old:
-        return {"new": new, "removed": []}
+async def get_detailed_info(
+    identifier: str, 
+    reference: str, 
+    alert: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """
+    Fetch detailed information for a specific call.
     
-    old_refs = {item["reference"] for item in old}
-    new_refs = {item["reference"] for item in new}
-
-    added = [item for item in new if item["reference"] not in old_refs]
-    removed = [item for item in old if item["reference"] not in new_refs]
-
-    return {"new": added, "removed": removed}
-
-async def get_detailed_info(identifier: str, reference: str, url: str, params: Dict) -> Optional[Dict]:
-    query = load_json(f"{CONFIG_DIR}/query.json")
-    if not query:
-        logging.error("query.json introuvable.")
+    Args:
+        identifier: Call identifier
+        reference: Call reference
+        alert: Alert configuration
+        
+    Returns:
+        Detailed information for the call or None if failed
+    """
+    # Create alerts directory if it doesn't exist
+    os.makedirs(ALERTS_SUBFOLDER, exist_ok=True)
+    
+    # Prepare a unique temporary query file path
+    unique_id = str(uuid.uuid4())[:8]
+    tmp_query_path = f"{ALERTS_SUBFOLDER}/{alert.get('name')}_{unique_id}_query_tmp.json"
+    
+    logger.info(f"Preparing temporary file {tmp_query_path}")
+    
+    try:
+        # Get the query from file or alert configuration
+        query = _load_query(alert)
+        if not query:
+            return None
+            
+        # Add the identifier to the query
+        query = add_identifiers_to_query(query, identifier)
+        
+        # Save the modified query to the temporary file
+        if not _save_temp_query(query, tmp_query_path):
+            return None
+            
+        # Prepare file paths for the API request
+        file_paths = _prepare_file_paths(alert, tmp_query_path)
+            
+        # Perform the API request and process results
+        return await _fetch_and_process_results(file_paths, identifier, reference)
+            
+    except Exception as e:
+        logger.error(f"Error in get_detailed_info: {e}", exc_info=True)
         return None
+    finally:
+        # Always try to clean up the temporary file
+        _cleanup_temp_file(tmp_query_path)
 
-    query.setdefault("bool", {}).setdefault("must", []).append({
-        "text": {
-            "query": identifier,
-            "fields": ["identifier"],
-            "defaultOperator": "AND"
-        }
-    })
 
-    async def open_files():
-        return [
-            ('query', ('inline-query.json', json.dumps(query), 'application/json')),
-            ('languages', ('languages.json', open(f'{CONFIG_DIR}/languages.json', 'rb'), 'application/json')),
-            ('sort', ('sort.json', open(f'{CONFIG_DIR}/sort.json', 'rb'), 'application/json'))
-        ]
+def _load_query(alert: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Load query from file path or alert configuration."""
+    query_path = alert.get("file_paths", {}).get('query', '')
+    query = None
+    
+    if os.path.exists(query_path):
+        query = load_json(query_path)
+        logger.info(f"Query loaded from {query_path}")
+    
+    # If query file doesn't exist or is invalid, try the query from the alert
+    if not query:
+        logger.warning(f"Query file {query_path} not found or invalid, using alert's query")
+        query = alert.get("query", {})
+    
+    # If still no query, we cannot proceed
+    if not query:
+        logger.error("No query found for the alert.")
+        return None
+        
+    return query
 
-    page = 1
-    results = []
 
-    while True:
-        params["pageNumber"] = page
-        files = await open_files()
-        async with aiohttp.ClientSession() as session:
-            data = aiohttp.FormData()
-            for key, (filename, file, content_type) in files:
-                data.add_field(key, file, filename=filename, content_type=content_type)
-            try:
-                async with session.post(url, params=params, data=data) as response:
-                    if response.status != 200:
-                        logging.error(f"Erreur de réponse API : {response.status} - {await response.text()}")
-                        return None
-                    try:
-                        text = await response.text()
-                        data = json.loads(text)
-                    except json.JSONDecodeError as e:
-                        text = await response.text()
-                        print(f"Response length: {len(text)} chars")
-                        print(f"JSON decode error: {e}. Raw response (truncated): {text[:500]}")
-                        data = {}
-                    results += data.get("results", [])
-                    if page * data.get("pageSize", 50) >= data.get("totalResults", 0):
-                        break
-                    page += 1
-            except aiohttp.ClientError as e:
-                logging.error(f"API request failed: {e}")
+def _save_temp_query(query: Dict[str, Any], tmp_query_path: str) -> bool:
+    """Save modified query to temporary file."""
+    logger.info(f"Saving modified query to {tmp_query_path}")
+    if not save_json(query, tmp_query_path):
+        logger.error(f"Error saving temporary file {tmp_query_path}")
+        return False
+    
+    # Verify the file was created successfully
+    if not os.path.exists(tmp_query_path):
+        logger.error(f"Temporary file {tmp_query_path} was not created properly")
+        return False
+        
+    logger.info(f"Temporary file {tmp_query_path} created successfully")
+    return True
+
+
+def _prepare_file_paths(alert: Dict[str, Any], tmp_query_path: str) -> Dict[str, str]:
+    """Prepare file paths for API request."""
+    return {
+        'query': tmp_query_path,
+        'languages': alert.get("file_paths", {}).get('languages', 'config/languages.json'),
+        'sort': alert.get("file_paths", {}).get('sort', 'config/sort.json')
+    }
+
+
+def _cleanup_temp_file(file_path: str) -> None:
+    """Clean up temporary query file."""
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+            logger.info(f"Temporary file {file_path} deleted successfully")
+        except Exception as e:
+            logger.warning(f"Failed to delete temporary file {file_path}: {e}")
+
+
+async def _fetch_and_process_results(
+    file_paths: Dict[str, str],
+    identifier: str,
+    reference: str
+) -> Optional[Dict[str, Any]]:
+    """Fetch results from API and process them."""
+    # Make the initial API request
+    response = await request_api_async(API_URL, API_PARAMS, file_paths)
+    
+    if not response:
+        logger.warning("No response received from API request.")
+        return None
+    
+    total_results: int = response.get("totalResults", 0)
+    total_pages: int = (total_results + PAGE_SIZE - 1) // PAGE_SIZE
+    
+    results: List[Dict[str, Any]] = []
+    
+    # Fetch all pages
+    for page in range(1, total_pages + 1):
+        params_copy = API_PARAMS.copy()
+        params_copy.update({"pageNumber": page, "pageSize": PAGE_SIZE})
+        
+        try:
+            # Verify the temporary file still exists before each request
+            if not os.path.exists(file_paths['query']):
+                logger.error(f"Temporary file {file_paths['query']} disappeared before page {page} request")
                 return None
-            finally:
-                for _, f in files:
-                    if hasattr(f[1], 'close'):
-                        f[1].close()
-
+                
+            page_response = await request_api_async(API_URL, params_copy, file_paths)
+            if not page_response:
+                logger.error(f"Page {page} returned no response.")
+                continue
+            
+            logger.info(f"Fetched page {page}/{total_pages}")
+            results.extend(page_response.get("results", []))
+        except Exception as e:
+            logger.error(f"API request for page {page} failed: {e}")
+            continue
+            
+    # Process results
     for res in results:
         if res.get("reference") == reference:
-            metadata = res.get("metadata", {})
-            description = (
-                " ".join(metadata.get("descriptionByte", []))  # Join list if descriptionByte is a list
-                if isinstance(metadata.get("descriptionByte"), list)
-                else metadata.get("descriptionByte", "").lower()
-            )
-            config = load_json(f"{CONFIG_DIR}/config.json") or {}
-            keywords = config.get("keywords", [])
-
-            # Filter based on keywords
-            if not any(keyword.lower() in description for keyword in keywords):
-                return None
-
-            call_url = res.get("url", "")
-            if call_url.endswith(".json"):
-                full_url = f"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/{identifier}"
-            else:
-                callccm2 = metadata.get("callccm2Id", [""])[0]
-                full_url = f"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/competitive-calls-cs/{callccm2}"
-
-            def format_date(date_str: str) -> str:
-                try:
-                    date_obj = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%f%z")
-                    return date_obj.strftime("%d-%m-%Y")
-                except ValueError:
-                    return date_str  # Return the original string if parsing fails
-
-            return {
-                "title": metadata.get("title"),
-                "starting_date": format_date(metadata.get("startDate")[0] if isinstance(metadata.get("startDate"), list) else metadata.get("startDate")),
-                "deadline": format_date(metadata.get("deadlineDate")[0] if isinstance(metadata.get("deadlineDate"), list) else metadata.get("deadlineDate")),
-                "type": map_type(metadata.get("type")[0]), # Type in facet is not the same as the website
-                "status": get_value_from_rawValue(metadata.get("status")[0], "status"),
-                "frameworkProgramme": get_value_from_rawValue(metadata.get("frameworkProgramme")[0], "frameworkProgramme"),
-                "url": full_url,
-                "identifier": identifier,
-                "reference": reference,
-                "summary": res.get("summary")
-            }
+            return _extract_call_details(res, identifier)
+    
+    logger.warning(f"No result found matching reference {reference}")
     return None
 
-def map_type(type_code: str) -> str:
-    return {
-        "1": "Direct calls for proposals (issued by the EU)",
-        "2": "EU External Actions",
-        "8": "Cascade funding"
-    }.get(type_code, "Other")
 
-async def check_new_results(url: str, params: Dict, receivers: List[str]) -> List[Dict]:
-    current = await fetch_all_references(url, params)
-    previous = load_previous_results()
-    comparison = compare_results(previous, current)
-
-    save_json(current, DATA_FILE)
-
-    if comparison["new"]:
-        print("Nouveau(x) résultat(s) détecté(s)")
-        logging.info(f"{len(comparison['new'])} nouveau(x) résultat(s) détecté(s).")
-
-        details_tasks = [
-            get_detailed_info(item["identifier"][0], item["reference"], url, params)
-            for item in comparison["new"]
-        ]
-        details = await asyncio.gather(*details_tasks)
-        details = [d for d in details if d]
-
-        if details:
-            send_email_alert(details, receivers)
-            return details
+def _extract_call_details(result: Dict[str, Any], identifier: str) -> Dict[str, Any]:
+    """Extract and format call details from API result."""
+    metadata = result.get("metadata", {})
+    
+    # Determine the URL format
+    call_url = result.get("url", "")
+    if call_url.endswith(".json"):
+        full_url = f"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/{identifier}"
     else:
-        logging.info("✅ Aucun nouveau résultat.")
-    return []
+        callccm2 = _get_first_value(metadata.get("callccm2Id"))
+        full_url = f"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/competitive-calls-cs/{callccm2}"
+    
+    return {
+        "title": metadata.get("title"),
+        "starting_date": format_date(metadata.get("startDate")),
+        "deadline": format_date(metadata.get("deadlineDate")),
+        "type": map_type(_get_first_value(metadata.get("type"))),
+        "status": get_value_from_rawValue(_get_first_value(metadata.get("status")), "status"),
+        "frameworkProgramme": get_value_from_rawValue(_get_first_value(metadata.get("frameworkProgramme")), "frameworkProgramme"),
+        "url": full_url,
+        "identifier": identifier,
+        "reference": result.get("reference"),
+        "summary": result.get("summary")
+    }
+
+
+def _get_first_value(value: Any) -> str:
+    """Safely extract the first value from a list or return the value itself."""
+    if isinstance(value, list) and value:
+        return value[0]
+    return value or ""
+
+async def get_total_results(alert: Dict[str, Any]) -> int:
+    """
+    Get the total number of results from the API.
+    
+    Args:
+        alert: Alert configuration containing file paths and keywords
+        
+    Returns:
+        Total number of results or 0 if failed
+    """
+    try:
+        # check if query file exists else create it
+        file_paths = alert.get("file_paths", {})
+        if isinstance(file_paths, dict):
+            query_path = file_paths.get('query', '')
+        else:
+            query_path = file_paths if isinstance(file_paths, str) else ''
+        
+        query = alert.get("query", {})
+        if not save_json(query, query_path):
+            logger.error(f"Error saving query to {query_path}")
+            return 0
+        response = await request_api_async(API_URL, API_PARAMS, alert.get("file_paths", {}))
+        total_results = response.get("totalResults", 0) if response else 0
+        logger.info(f"Total results for alert '{alert.get('name')}': {total_results}")
+        return total_results
+    except Exception as e:
+        logger.error(f"Error fetching total results: {e}", exc_info=True)
+        return 0

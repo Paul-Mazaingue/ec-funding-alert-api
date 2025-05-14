@@ -1,21 +1,21 @@
-import time
+from fastapi import FastAPI
+from app.routes import router
+from src.core import periodic_checker, weekly_facet_api_task
+
+from contextlib import asynccontextmanager
+import asyncio
 import logging
-from src.fetch import check_new_results
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Lifespan event handler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    loop = asyncio.get_event_loop()
+    loop.create_task(periodic_checker())
+    loop.create_task(weekly_facet_api_task())
+    logging.info("Background task started.")
+    yield
 
-URL = "https://api.tech.ec.europa.eu/search-api/prod/rest/search"
-PARAMS = {
-    "apiKey": "SEDIA",
-    "text": "***"
-}
+app = FastAPI(lifespan=lifespan)
 
-if __name__ == "__main__":
-    
-    while True:
-        try:
-            check_new_results(URL, PARAMS)
-        except Exception as e:
-            logging.exception("Une erreur est survenue lors de la vérification des résultats.")
-        logging.info("Attente de 5 minutes avant la prochaine vérification...")
-        time.sleep(300)
+# Include routes
+app.include_router(router)
