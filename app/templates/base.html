@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Veille Appels d'Offres</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -55,6 +56,9 @@
       .sidebar-overlay.open {
         display: block;
       }
+      .form-section:hover {
+        transform: none;
+      }
     }
   </style>
 </head>
@@ -77,17 +81,17 @@
     </div>
     
     <!-- Main content -->
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 overflow-y-auto p-3 md:p-4 pt-14 md:pt-4">
       <!-- Tabs Navigation -->
-      <div class="border-b border-gray-200 mb-6">
-        <ul class="flex space-x-8">
+      <div class="border-b border-gray-200 mb-4 md:mb-6 overflow-x-auto whitespace-nowrap">
+        <ul class="flex space-x-4 md:space-x-8 pb-1">
           <li>
-            <button id="tab-config" class="tab active py-4 px-2" onclick="switchTab('config')">
+            <button id="tab-config" class="tab active py-3 md:py-4 px-2 text-sm md:text-base" onclick="switchTab('config')">
               Configuration
             </button>
           </li>
           <li>
-            <button id="tab-alerts" class="tab py-4 px-2" onclick="switchTab('alerts')">
+            <button id="tab-alerts" class="tab py-3 md:py-4 px-2 text-sm md:text-base" onclick="switchTab('alerts')">
               Dernières alertes
             </button>
           </li>
@@ -161,6 +165,14 @@
       
       // Initialize sidebar toggle button
       document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+      
+      // Adjust layout on window resize
+      window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+          document.getElementById('sidebar-container').classList.remove('open');
+          document.getElementById('sidebar-overlay').classList.remove('open');
+        }
+      });
     });
   </script>
 </body>
