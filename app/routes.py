@@ -125,22 +125,49 @@ async def update_alert(
     
     # Helper to parse dates with different formats
     def parse_date(date_str):
-        if not date_str or not date_str.strip():
+        if not date_str:
             return None
             
         date_str = date_str.strip()
+        if not date_str:
+            return None
+            
         # Try different date formats
         formats = ['%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y']
         
         for fmt in formats:
             try:
-                timestamp = datetime.strptime(date_str, fmt).timestamp() * 1000
-                return int(timestamp)
+                date_obj = datetime.strptime(date_str, fmt)
+                timestamp = int(date_obj.timestamp() * 1000)
+                return timestamp
             except ValueError:
                 continue
                 
         logging.warning(f"Could not parse date: {date_str}")
         return None
+
+    # Process date ranges safely
+    start_date_range = {}
+    if startDate_start:
+        start_gte = parse_date(startDate_start)
+        if start_gte:
+            start_date_range["gte"] = start_gte
+            
+    if startDate_end:
+        start_lte = parse_date(startDate_end)
+        if start_lte:
+            start_date_range["lte"] = start_lte
+    
+    deadline_range = {}
+    if deadlineDate_start:
+        deadline_gte = parse_date(deadlineDate_start)
+        if deadline_gte:
+            deadline_range["gte"] = deadline_gte
+            
+    if deadlineDate_end:
+        deadline_lte = parse_date(deadlineDate_end)
+        if deadline_lte:
+            deadline_range["lte"] = deadline_lte
 
     mapped_types = [k for t in type for k, v in TYPE_MAPPINGS.items() if v == t.strip()]
     query = generate_query(
@@ -148,14 +175,8 @@ async def update_alert(
         statuses=[get_rawValue_from_value(s.strip(), "status") for s in status if s],
         framework_programmes=get_rawValue_from_value(frameworkProgramme.strip(), "frameworkProgramme") if frameworkProgramme else None,
         call_identifier=get_rawValue_from_value(callIdentifier.strip(), "callIdentifier") if callIdentifier else None,
-        starting_date_range={
-            "gte": parse_date(startDate_start),
-            "lte": parse_date(startDate_end)
-        },
-        deadline_range={
-            "gte": parse_date(deadlineDate_start),
-            "lte": parse_date(deadlineDate_end)
-        },
+        starting_date_range=start_date_range,
+        deadline_range=deadline_range,
         text_search=text_search.strip()
     )
     
@@ -259,22 +280,22 @@ def transform_query(raw_query):
                 start_date_str = condition["range"]["startDate"].get("gte")
                 if start_date_str:
                     date_obj = datetime.fromtimestamp(int(start_date_str) / 1000)
-                    # Use consistent date format in UI
-                    query["startDate"]["start"] = date_obj.strftime("%Y-%m-%d")
+                    # Format date as dd-mm-yyyy
+                    query["startDate"]["start"] = date_obj.strftime("%d-%m-%Y")
                 end_date_str = condition["range"]["startDate"].get("lte")
                 if end_date_str:
                     date_obj = datetime.fromtimestamp(int(end_date_str) / 1000)
-                    query["startDate"]["end"] = date_obj.strftime("%Y-%m-%d")
+                    query["startDate"]["end"] = date_obj.strftime("%d-%m-%Y")
 
             if "deadlineDate" in condition["range"]:
                 start_date_str = condition["range"]["deadlineDate"].get("gte")
                 if start_date_str:
                     date_obj = datetime.fromtimestamp(int(start_date_str) / 1000)
-                    query["deadlineDate"]["start"] = date_obj.strftime("%Y-%m-%d")
+                    query["deadlineDate"]["start"] = date_obj.strftime("%d-%m-%Y")
                 end_date_str = condition["range"]["deadlineDate"].get("lte")
                 if end_date_str:
                     date_obj = datetime.fromtimestamp(int(end_date_str) / 1000)
-                    query["deadlineDate"]["end"] = date_obj.strftime("%Y-%m-%d")
+                    query["deadlineDate"]["end"] = date_obj.strftime("%d-%m-%Y")
         if "bool" in condition:
             query["text_search"] = condition["bool"].get("should", [{}])[0].get("phrase", {}).get("query", "")
                 

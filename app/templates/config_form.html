@@ -147,18 +147,20 @@
   <div>
     <label class="block font-semibold text-sm md:text-base mb-2">Plage de Date de Début</label>
     <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-      <input type="date" name="startDate_start" value="{{ alert.query.startDate.start if alert.query and alert.query.startDate and alert.query.startDate.start else '' }}" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
-      <input type="date" name="startDate_end" value="{{ alert.query.startDate.end if alert.query and alert.query.startDate and alert.query.startDate.end else '' }}" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
+      <input type="text" name="startDate_start" value="{{ alert.query.startDate.start if alert.query and alert.query.startDate and alert.query.startDate.start else '' }}" placeholder="jj-mm-aaaa" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
+      <input type="text" name="startDate_end" value="{{ alert.query.startDate.end if alert.query and alert.query.startDate.end else '' }}" placeholder="jj-mm-aaaa" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
     </div>
+    <p class="text-xs text-gray-500 mt-1">Format: jj-mm-aaaa (exemple: 01-12-2023)</p>
   </div>
 
   <!-- Deadline Range -->
   <div>
     <label class="block font-semibold text-sm md:text-base mb-2">Plage de Date Limite</label>
     <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-      <input type="date" name="deadlineDate_start" value="{{ alert.query.deadlineDate.start if alert.query.deadlineDate and alert.query.deadlineDate.start else '' }}" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
-      <input type="date" name="deadlineDate_end" value="{{ alert.query.deadlineDate.end if alert.query and alert.query.deadlineDate.end else '' }}" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
+      <input type="text" name="deadlineDate_start" value="{{ alert.query.deadlineDate.start if alert.query.deadlineDate and alert.query.deadlineDate.start else '' }}" placeholder="jj-mm-aaaa" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
+      <input type="text" name="deadlineDate_end" value="{{ alert.query.deadlineDate.end if alert.query and alert.query.deadlineDate.end else '' }}" placeholder="jj-mm-aaaa" class="w-full border rounded p-2 text-sm query-param" data-param-type="date" />
     </div>
+    <p class="text-xs text-gray-500 mt-1">Format: jj-mm-aaaa (exemple: 01-12-2023)</p>
   </div>
 
   <!-- Text Search -->
