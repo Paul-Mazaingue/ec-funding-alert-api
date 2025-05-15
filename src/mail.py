@@ -45,7 +45,7 @@ def format_alert_message(result: Dict[str, Any], template: str) -> str:
     
     # Create a dictionary of all replacements
     replacements = {
-        "{title}": title,
+        "{title}": title ,
         "{starting_date}": str(result.get("starting_date", "")),
         "{deadline}": str(result.get("deadline", "")),
         "{type}": str(result.get("type", "")),
@@ -128,7 +128,7 @@ def send_email_alert(
         msg = MIMEMultipart()
         msg["From"] = SENDER
         msg["To"] = ", ".join(receivers)
-        msg["Subject"] = subject
+        msg["Subject"] = f"{subject} ({len(results)})"
         
         # Call build_limited_email_body once with the entire results list
         body = build_limited_email_body(results, alert_template)
