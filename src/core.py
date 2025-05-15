@@ -258,7 +258,7 @@ async def check_new_results(alert: Dict[str, Any]) -> List[Dict[str, Any]]:
     # Vérifier si l'alerte existe toujours après la récupération des résultats
     alerts = load_json(ALERTS_PATH)
     if not any(a.get("name") == alert.get("name") for a in alerts):
-        logging.info(f"L'alerte '{alert.get("name")}' a été supprimée pendant la récupération, on skip la suite.")
+        logging.info(f"L'alerte '{alert.get('name')}' a été supprimée pendant la récupération, on skip la suite.")
         return []
     else:
         file_path = f"{ALERTS_SUBFOLDER}/{alert.get('name')}.json"
