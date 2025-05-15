@@ -19,7 +19,7 @@ API_URL: str = "https://api.tech.ec.europa.eu/search-api/prod/rest/search"
 API_PARAMS: Dict[str, str] = {"apiKey": "SEDIA", "text": "***"}
 
 # Request configuration
-SIMULTANEOUS_REQUESTS: int = 3
+SIMULTANEOUS_REQUESTS: int = 10
 PAGE_SIZE: int = 100
 DATAFOLDER: str = "data"
 ALERTS_SUBFOLDER: str = f"{DATAFOLDER}/alerts"
