@@ -68,27 +68,81 @@
   <!-- Framework Programmes -->
   <div>
     <label class="block font-semibold text-sm md:text-base mb-2">Programme Cadre</label>
-    <input type="text" placeholder="Rechercher..." class="w-full border rounded p-2 mb-2 text-sm" oninput="filterDropdown('frameworkProgramme', this.value)" />
-    <select name="frameworkProgramme" id="frameworkProgramme" class="w-full border rounded p-2 text-sm query-param" data-param-type="select">
-      <option value="">-- Sélectionnez --</option>
-      {% for programme in available_query.frameworkProgramme %}
-      <option value="{{ programme }}" {% if alert.query.frameworkProgramme and programme == alert.query.frameworkProgramme %}selected{% endif %}>{{ programme }}</option>
-      {% endfor %}
-    </select>
+    <div class="relative">
+      <input 
+        type="text" 
+        id="frameworkProgrammeInput" 
+        placeholder="Rechercher et sélectionner..." 
+        class="w-full border rounded p-2 text-sm" 
+        value="{{ alert.query.frameworkProgramme if alert.query.frameworkProgramme else '' }}"
+        autocomplete="off"
+        onfocus="showDropdown('frameworkProgrammeDropdown')"
+        oninput="filterOptions('frameworkProgrammeInput', 'frameworkProgrammeDropdown', 'frameworkProgrammeHidden')"
+      />
+      <input 
+        type="hidden" 
+        name="frameworkProgramme" 
+        id="frameworkProgrammeHidden" 
+        value="{{ alert.query.frameworkProgramme if alert.query.frameworkProgramme else '' }}"
+        class="query-param" 
+        data-param-type="select"
+      />
+      <div id="frameworkProgrammeDropdown" class="absolute z-10 hidden w-full bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-y-auto">
+        <div class="p-2 text-xs text-gray-500">Sélectionnez une option</div>
+        <div class="border-t border-gray-200"></div>
+        {% for programme in available_query.frameworkProgramme %}
+        <div 
+          class="p-2 hover:bg-blue-100 cursor-pointer text-sm option-item" 
+          data-value="{{ programme }}"
+          onclick="selectOption('frameworkProgrammeInput', 'frameworkProgrammeHidden', 'frameworkProgrammeDropdown', '{{ programme }}')"
+        >
+          {{ programme }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div id="frameworkProgrammeError" class="text-red-500 text-xs mt-1 hidden">Veuillez sélectionner un programme valide</div>
   </div>
 
   <!-- Call Identifier -->
   <div>
     <label class="block font-semibold text-sm md:text-base mb-2">Identifiant de l'Appel</label>
-    <input type="text" placeholder="Rechercher..." class="w-full border rounded p-2 mb-2 text-sm" oninput="filterDropdown('callIdentifier', this.value)" />
-    <select name="callIdentifier" id="callIdentifier" class="w-full border rounded p-2 text-sm query-param" data-param-type="select">
-      <option value="">-- Sélectionnez --</option>
-      {% for identifier in available_query.callIdentifier %}
-      <option value="{{ identifier }}" {% if alert.query.callIdentifier and identifier == alert.query.callIdentifier %}selected{% endif %}>{{ identifier }}</option>
-      {% endfor %}
-    </select>
+    <div class="relative">
+      <input 
+        type="text" 
+        id="callIdentifierInput" 
+        placeholder="Rechercher et sélectionner..." 
+        class="w-full border rounded p-2 text-sm" 
+        value="{{ alert.query.callIdentifier if alert.query.callIdentifier else '' }}"
+        autocomplete="off"
+        onfocus="showDropdown('callIdentifierDropdown')"
+        oninput="filterOptions('callIdentifierInput', 'callIdentifierDropdown', 'callIdentifierHidden')"
+      />
+      <input 
+        type="hidden" 
+        name="callIdentifier" 
+        id="callIdentifierHidden" 
+        value="{{ alert.query.callIdentifier if alert.query.callIdentifier else '' }}"
+        class="query-param" 
+        data-param-type="select"
+      />
+      <div id="callIdentifierDropdown" class="absolute z-10 hidden w-full bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-y-auto">
+        <div class="p-2 text-xs text-gray-500">Sélectionnez une option</div>
+        <div class="border-t border-gray-200"></div>
+        {% for identifier in available_query.callIdentifier %}
+        <div 
+          class="p-2 hover:bg-blue-100 cursor-pointer text-sm option-item" 
+          data-value="{{ identifier }}"
+          onclick="selectOption('callIdentifierInput', 'callIdentifierHidden', 'callIdentifierDropdown', '{{ identifier }}')"
+        >
+          {{ identifier }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div id="callIdentifierError" class="text-red-500 text-xs mt-1 hidden">Veuillez sélectionner un identifiant d'appel valide</div>
   </div>
-
+  
   <!-- Starting Date Range -->
   <div>
     <label class="block font-semibold text-sm md:text-base mb-2">Plage de Date de Début</label>
@@ -159,4 +213,115 @@
   function filterDropdown(id, query) {
     // ...existing code...
   }
+
+  function filterOptions(inputId, dropdownId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const filter = input.value.toLowerCase();
+    
+    // Make sure dropdown is visible when filtering
+    dropdown.classList.remove('hidden');
+    
+    // Find and filter options
+    const options = dropdown.querySelectorAll('.option-item');
+    let visibleCount = 0;
+    
+    options.forEach(option => {
+      const text = option.textContent.toLowerCase();
+      if (text.includes(filter)) {
+        option.style.display = "";
+        visibleCount++;
+      } else {
+        option.style.display = "none";
+      }
+    });
+    
+    // Update hidden value - clear it if not a valid option
+    validateInput(inputId, hiddenId);
+  }
+  
+  function showDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    dropdown.classList.remove('hidden');
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function closeDropdown(e) {
+      if (!e.target.closest('#' + dropdownId) && !e.target.id.includes('Input')) {
+        dropdown.classList.add('hidden');
+        document.removeEventListener('click', closeDropdown);
+      }
+    });
+  }
+  
+  function selectOption(inputId, hiddenId, dropdownId, value) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    const dropdown = document.getElementById(dropdownId);
+    
+    input.value = value;
+    hidden.value = value;
+    dropdown.classList.add('hidden');
+    hideError(inputId.replace('Input', 'Error'));
+  }
+  
+  function validateInput(inputId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    const errorId = inputId.replace('Input', 'Error');
+    
+    // Clear hidden value if input doesn't match any valid option
+    if (input.value.trim() === "") {
+      hidden.value = "";
+      hideError(errorId);
+      return true;
+    }
+    
+    // Check if the input value matches any available option
+    const dropdown = document.getElementById(inputId.replace('Input', 'Dropdown'));
+    const options = dropdown.querySelectorAll('.option-item');
+    let found = false;
+    
+    options.forEach(option => {
+      if (option.getAttribute('data-value') === input.value) {
+        found = true;
+      }
+    });
+    
+    if (!found) {
+      hidden.value = "";
+      showError(errorId);
+      return false;
+    } else {
+      hideError(errorId);
+      return true;
+    }
+  }
+  
+  function showError(errorId) {
+    const error = document.getElementById(errorId);
+    if (error) error.classList.remove('hidden');
+  }
+  
+  function hideError(errorId) {
+    const error = document.getElementById(errorId);
+    if (error) error.classList.add('hidden');
+  }
+  
+  // Add form validation
+  document.querySelector('form').addEventListener('submit', function(e) {
+    // Validate framework programme
+    if (!validateInput('frameworkProgrammeInput', 'frameworkProgrammeHidden')) {
+      e.preventDefault();
+      alert('Veuillez sélectionner un Programme Cadre valide');
+      return false;
+    }
+    
+    // Validate call identifier
+    if (document.getElementById('callIdentifierInput').value.trim() !== '' && 
+        !validateInput('callIdentifierInput', 'callIdentifierHidden')) {
+      e.preventDefault();
+      alert('Veuillez sélectionner un Identifiant d\'Appel valide');
+      return false;
+    }
+  });
 </script>
