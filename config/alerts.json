@@ -469,6 +469,21 @@
         "lastDetails": [
             {
                 "title": [
+                    "EIT Cross-KIC Regional Innovation"
+                ],
+                "starting_date": "30-04-2025",
+                "deadline": "01-07-2025",
+                "type": "Cascade funding",
+                "status": "Open for submission",
+                "frameworkProgramme": "Horizon Europe (HORIZON)",
+                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/competitive-calls-cs/10942",
+                "identifier": "HORIZON-EIT-2023-25-Cross-KIC-Regional-Innovation",
+                "reference": "10942COMPETITIVE_CALLen",
+                "summary": "EIT Jumpstarter Next 2025 Call for Proposals #2",
+                "retrieved_at": "15-05-2025 11:53:57"
+            },
+            {
+                "title": [
                     "Supporting Digital Partnerships in Quantum technologies (RIA)"
                 ],
                 "starting_date": "10-06-2025",
@@ -15451,23 +15466,8 @@
                 "reference": "31071360Coordinationandsupportaction1447113600000",
                 "summary": "Supporting international cooperation activities on water",
                 "retrieved_at": "15-05-2025 08:56:56"
-            },
-            {
-                "title": [
-                    "Supporting international cooperation activities on agriculture soil contribution to climate change mitigation and adaptation"
-                ],
-                "starting_date": "04-10-2016",
-                "deadline": "14-02-2017",
-                "type": "Direct calls for proposals (issued by the EU)",
-                "status": "Closed",
-                "frameworkProgramme": "Horizon 2020 Framework Programme (H2020 - 2014-2020)",
-                "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/opportunities/topic-details/SFS-50-2017",
-                "identifier": "SFS-50-2017",
-                "reference": "31078939Coordinationandsupportaction1475539200000",
-                "summary": "Supporting international cooperation activities on agriculture soil contribution to climate change mitigation and adaptation",
-                "retrieved_at": "15-05-2025 08:56:56"
             }
         ],
-        "totalResults": 9796
+        "totalResults": 9797
     }
 ]

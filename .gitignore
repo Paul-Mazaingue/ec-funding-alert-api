@@ -1,5 +1,20 @@
-/data
-/other
+# Fichiers sensibles ou locaux
 .env
+*.env
+
+# Répertoires à ne pas versionner
 venv/
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Dossiers de données locales
+/data/
+
+# Cache de l'éditeur
+.vscode/
+.idea/
+
+/other/
