@@ -27,7 +27,7 @@ CHECKER_SLEEP_SECONDS = 60
 ERROR_RETRY_SECONDS = 60
 
 # Max number of details to keep
-MAX_SAVED_DETAILS = 100
+MAX_SAVED_DETAILS = 1000
 
 WEEKLY_FACET_FILE = "data/facet.json"
 WEEKLY_FACET_API_INTERVAL_SECONDS = 7 * 24 * 60 * 60  # 1 semaine
@@ -284,9 +284,16 @@ async def _process_new_results(new_items: List[Dict[str, Any]], alert: Dict[str,
         List of detailed information for the new items
     """
     details_tasks = []
+    # Limite le nombre de requêtes simultanées avec un sémaphore
+    semaphore = asyncio.Semaphore(20)
+
+    async def limited_get_detailed_info(identifier_value, reference, alert):
+        async with semaphore:
+            return await get_detailed_info(identifier_value, reference, alert)
+
     for item in new_items:
         identifier_value = item["identifier"][0] if isinstance(item["identifier"], list) else item["identifier"]
-        task = get_detailed_info(identifier_value, item["reference"], alert)
+        task = limited_get_detailed_info(identifier_value, item["reference"], alert)
         details_tasks.append(task)
     
     details = await asyncio.gather(*details_tasks)
