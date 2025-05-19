@@ -12,6 +12,8 @@ __pycache__/
 
 # Dossiers de données locales
 /data/
+# Fichiers de configuration locaux
+config/alerts.json
 
 # Cache de l'éditeur
 .vscode/

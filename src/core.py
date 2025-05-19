@@ -13,6 +13,7 @@ from .facet import request_facet_api
 # Configuration constants
 CONFIG_PATH = "config/config.json"
 ALERTS_PATH = "config/alerts.json"
+DEFAULT_ALERTS_PATH = "config/default_alerts.json"
 DATAFOLDER: str = "data"
 CONFIGFOLDER: str = "config"
 ALERTS_SUBFOLDER = f"{DATAFOLDER}/alerts"
@@ -53,6 +54,14 @@ async def periodic_checker() -> None:
     
     while True:
         try:
+            # check if ALERTS_PATH exists else copy the default one
+            if not os.path.exists(ALERTS_PATH):
+                logging.info(f"Le fichier {ALERTS_PATH} n'existe pas, on le copie depuis {DEFAULT_ALERTS_PATH}")
+                os.makedirs(os.path.dirname(ALERTS_PATH), exist_ok=True)
+                with open(DEFAULT_ALERTS_PATH, "r", encoding="utf-8") as f:
+                    default_alerts = json.load(f)
+                save_json(default_alerts, ALERTS_PATH)
+
             # Load the alerts from the config file
             alerts = load_json(ALERTS_PATH)
             current_time = datetime.now()
@@ -123,6 +132,7 @@ def _ensure_query_file_exists(alert: Dict[str, Any]) -> bool:
     Returns True if the file exists and is identical to the alert's query, False otherwise.
     """
     file_path = alert.get("file_paths", {}).get("query")
+    print("File path:", file_path)
     if file_path:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         query_in_alert = alert.get("query")
@@ -259,6 +269,11 @@ async def check_new_results(alert: Dict[str, Any]) -> List[Dict[str, Any]]:
     alerts = load_json(ALERTS_PATH)
     if not any(a.get("name") == alert.get("name") for a in alerts):
         logging.info(f"L'alerte '{alert.get('name')}' a été supprimée pendant la récupération, on skip la suite.")
+        # Vérifier que les fichiers liés à l'alerte sont supprimés
+        if os.path.exists(f"{ALERTS_SUBFOLDER}/{alert.get('name')}.json"):
+            os.remove(f"{ALERTS_SUBFOLDER}/{alert.get('name')}.json")
+        if os.path.exists(f"{ALERTS_SUBFOLDER}/{alert.get('name')}.json"):
+            os.remove(f"{ALERTS_SUBFOLDER}/{alert.get('name')}_query.json")
         return []
     else:
         file_path = f"{ALERTS_SUBFOLDER}/{alert.get('name')}.json"
