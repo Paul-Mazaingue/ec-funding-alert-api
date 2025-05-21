@@ -92,7 +92,8 @@ async def create_alert(new_alert_name: str = Form(...)):
             "keywords": [],
             "query": {"bool": {"must": [{"terms": {"type": ["1","8","2"]}},{"terms": {"status": ["31094503","31094502","31094501"]}}]}},
             "lastDetails": [],
-            "totalResults": 0
+            "totalResults": 0,
+            "updated": True
         }
 
         total_results = await get_total_results(new_alert)
@@ -205,7 +206,9 @@ async def update_alert(
             # Convertir les dictionnaires en JSON pour comparer leur contenu
             if json.dumps(alert.get("query", {}), sort_keys=True) != json.dumps(query, sort_keys=True) or \
                alert.get("keywords") != [k.strip() for k in keywords.split(",") if k.strip()]:
+                print("Query or keywords changed, resetting lastDetails")
                 alert["lastDetails"] = []
+                alert["updated"] = True
             alert["emails"] = [e.strip() for e in emails.split(",") if e.strip()]
             alert["interval"] = interval
             alert["message"] = message
@@ -213,27 +216,10 @@ async def update_alert(
             alert["query"] = query
 
             total_results = await get_total_results(alert)
-            # delete query file if exists
-            alert_file_path = f"{DATA_FOLDER}/alerts/{current_alert_name}.json"
-            try:
-                if os.path.exists(alert_file_path):
-                    os.remove(alert_file_path)
-            except PermissionError:
-                logging.warning(f"Cannot delete {alert_file_path} - file is being used by another process")
-            except Exception as e:
-                logging.error(f"Error deleting {alert_file_path}: {str(e)}")
-            alert_query_file_path = f"{DATA_FOLDER}/alerts/{current_alert_name}_query.json"
-            try:
-                if os.path.exists(alert_query_file_path):
-                    os.remove(alert_query_file_path)
-            except PermissionError:
-                logging.warning(f"Cannot delete {alert_query_file_path} - file is being used by another process")
-            except Exception as e:
-                logging.error(f"Error deleting {alert_query_file_path}: {str(e)}")
             
             alert["totalResults"] = total_results
             break
-    
+
     save_json(alerts, ALERTS_PATH)
     return RedirectResponse(f"/?alert={current_alert_name}", status_code=303)
 

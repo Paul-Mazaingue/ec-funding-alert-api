@@ -75,6 +75,11 @@ async def periodic_checker() -> None:
                 
                 # Check if it's time to process this alert
                 if _should_check_alert(alert_name, current_time, last_checked, interval_minutes):
+                    # check if the alert still exists
+                    if _check_deleted(alert_name):
+                        continue
+
+
                     logging.info(f"Checking alert '{alert_name}'")
                     
                     # Ensure query file exists
@@ -87,8 +92,17 @@ async def periodic_checker() -> None:
                         
                         comparison = await check_new_results(alert)
                         if comparison and change_query:
+
+                            if (_check_deleted(alert_name) or _check_updated(alert_name)):
+                                continue
+
                             details = await _process_new_results(comparison, alert)
-                            if(details):
+
+                            # check if alert still exists 
+                            if (_check_deleted(alert_name)):
+                                continue
+
+                            if(details and not _check_updated(alert_name)):
                                 # Update and save alert with new details
                                 _update_and_save_alert(alerts, alert_name, details)
                                 email_subject = f"Nouveaux résultats : {alert_name}"
@@ -113,6 +127,49 @@ async def periodic_checker() -> None:
         except Exception as e:
             logging.error(f"Error in periodic checker: {str(e)}", exc_info=True)
             await asyncio.sleep(ERROR_RETRY_SECONDS)
+
+def _check_updated(alert_name):
+    """
+    Check if the alert has been updated.
+    
+    Args:
+        alert_name: The name of the alert to check
+    
+    Returns:
+        True if the alert has been updated, False otherwise
+    """
+    alerts = load_json(ALERTS_PATH)
+    if any( a.get("updated") for a in alerts):
+        # updated to false
+        for i, alert in enumerate(alerts):
+            if alert.get("name") == alert_name:
+                alerts[i]["updated"] = False
+                save_json(alerts, ALERTS_PATH)
+                logging.info(f"L'alerte '{alert_name}' a été mise à jour.")
+        return True
+    return False
+
+def _check_deleted(alert_name):
+    """
+    Check if the alert has been deleted.
+    
+    Args:
+        alert_name: The name of the alert to check
+    
+    Returns:
+        True if the alert has been deleted, False otherwise
+    """
+    alerts = load_json(ALERTS_PATH)
+    
+    if not any(a.get("name") == alert_name for a in alerts):
+        logging.info(f"L'alerte '{alert_name}' a été supprimée, on skip la suite.")
+        # Check if the files related to the alert are deleted
+        if os.path.exists(f"{ALERTS_SUBFOLDER}/{alert_name}.json"):
+            os.remove(f"{ALERTS_SUBFOLDER}/{alert_name}.json")
+        if os.path.exists(f"{ALERTS_SUBFOLDER}/{alert_name}_query.json"):
+            os.remove(f"{ALERTS_SUBFOLDER}/{alert_name}_query.json")
+        return True
+    return False
 
 
 def _should_check_alert(
@@ -178,6 +235,13 @@ def _cleanup_removed_alerts(last_checked: Dict[str, datetime], known_alerts: Set
         if alert_name not in known_alerts:
             logging.info(f"Alert '{alert_name}' has been removed, no longer tracking")
             del last_checked[alert_name]
+            # delete the alert file if it exists
+            file_path = f"{ALERTS_SUBFOLDER}/{alert_name}.json"
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            file_path_query = f"{ALERTS_SUBFOLDER}/{alert_name}_query.json"
+            if os.path.exists(file_path_query):
+                os.remove(file_path_query)
 
 
 def save_details(details: List[Dict[str, Any]], alert: Dict[str, Any]) -> Dict[str, Any]:
