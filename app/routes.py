@@ -96,6 +96,24 @@ async def create_alert(new_alert_name: str = Form(...)):
         }
 
         total_results = await get_total_results(new_alert)
+        # delete query file if exists
+        alert_file_path = f"{DATA_FOLDER}/alerts/{new_alert_name}.json"
+        alert_query_file_path = f"{DATA_FOLDER}/alerts/{new_alert_name}_query.json"
+        try:
+            if os.path.exists(alert_file_path):
+                os.remove(alert_file_path)
+        except PermissionError:
+            logging.warning(f"Cannot delete {alert_file_path} - file is being used by another process")
+        except Exception as e:
+            logging.error(f"Error deleting {alert_file_path}: {str(e)}")
+        try:
+            if os.path.exists(alert_query_file_path):
+                os.remove(alert_query_file_path)
+        except PermissionError:
+            logging.warning(f"Cannot delete {alert_query_file_path} - file is being used by another process")
+        except Exception as e:
+            logging.error(f"Error deleting {alert_query_file_path}: {str(e)}")
+        
         new_alert["totalResults"] = total_results
         alerts.append(new_alert)
         save_json(alerts, ALERTS_PATH)
@@ -196,7 +214,7 @@ async def update_alert(
 
             total_results = await get_total_results(alert)
             # delete query file if exists
-            alert_file_path = f"{DATA_FOLDER}/alerts/{current_alert_name}_query.json"
+            alert_file_path = f"{DATA_FOLDER}/alerts/{current_alert_name}.json"
             try:
                 if os.path.exists(alert_file_path):
                     os.remove(alert_file_path)
@@ -204,6 +222,15 @@ async def update_alert(
                 logging.warning(f"Cannot delete {alert_file_path} - file is being used by another process")
             except Exception as e:
                 logging.error(f"Error deleting {alert_file_path}: {str(e)}")
+            alert_query_file_path = f"{DATA_FOLDER}/alerts/{current_alert_name}_query.json"
+            try:
+                if os.path.exists(alert_query_file_path):
+                    os.remove(alert_query_file_path)
+            except PermissionError:
+                logging.warning(f"Cannot delete {alert_query_file_path} - file is being used by another process")
+            except Exception as e:
+                logging.error(f"Error deleting {alert_query_file_path}: {str(e)}")
+            
             alert["totalResults"] = total_results
             break
     

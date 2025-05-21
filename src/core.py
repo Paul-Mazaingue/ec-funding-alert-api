@@ -134,10 +134,10 @@ def _ensure_query_file_exists(alert: Dict[str, Any]) -> bool:
     file_path = alert.get("file_paths", {}).get("query")
     print("File path:", file_path)
     if file_path:
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         query_in_alert = alert.get("query")
         if not os.path.exists(file_path):
             logging.info(f"Query file {file_path} doesn't exist. Creating a new file.")
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(query_in_alert, f, indent=4, ensure_ascii=False)
             return False
@@ -145,7 +145,7 @@ def _ensure_query_file_exists(alert: Dict[str, Any]) -> bool:
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     query_in_file = json.load(f)
-                if query_in_file != query_in_alert:
+                if json.dumps(query_in_file, sort_keys=True) != json.dumps(query_in_alert, sort_keys=True):
                     logging.info(f"Query in {file_path} differs from alert. Updating file.")
                     with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(query_in_alert, f, indent=4, ensure_ascii=False)
