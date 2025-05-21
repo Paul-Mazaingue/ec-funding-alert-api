@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Optional, List, Dict
 import os
 import logging  
+import json
 
 TYPE_MAPPINGS: Dict[str, str] = {
     "1": "Direct calls for proposals (issued by the EU)",
@@ -183,7 +184,9 @@ async def update_alert(
     for alert in alerts:
         if alert.get("name") == current_alert_name:
             # Reset lastDetails if query or keywords changed
-            if alert.get("query") != query or alert.get("keywords") != [k.strip() for k in keywords.split(",") if k.strip()]:
+            # Convertir les dictionnaires en JSON pour comparer leur contenu
+            if json.dumps(alert.get("query", {}), sort_keys=True) != json.dumps(query, sort_keys=True) or \
+               alert.get("keywords") != [k.strip() for k in keywords.split(",") if k.strip()]:
                 alert["lastDetails"] = []
             alert["emails"] = [e.strip() for e in emails.split(",") if e.strip()]
             alert["interval"] = interval
