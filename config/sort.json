@@ -1,4 +1,10 @@
-{
-    "order": "DESC",
-    "field": "title"
-}  
+[
+    {
+        "field": "title",
+        "order": "DESC"
+    },
+    {
+        "field": "identifier",
+        "order": "ASC"
+    }
+]
