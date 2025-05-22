@@ -164,7 +164,12 @@
   </div>
 
   <div>
-    <label class="block font-semibold text-sm md:text-base text-gray-700">Mots-clés (séparés par virgule) : seuls les appels d'offres contenant les mots-clés dans "Topic description" seront sélectionnés</label>
+    <label class="block font-semibold text-sm md:text-base text-gray-700">
+      Mots-clés (séparés par virgule) : seuls les appels d'offres contenant les mots-clés dans "Topic description" seront sélectionnés<br>
+      <span class="text-xs text-gray-500">
+        Astuce : ajoutez <strong>!</strong> devant un mot-clé pour exclure les appels d'offres contenant ce mot-clé.
+      </span>
+    </label>
     <input name="keywords" type="text" value="{{ ','.join(alert.keywords) }}" class="w-full border border-gray-300 rounded-lg p-2 md:p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
   </div>
 

@@ -44,36 +44,49 @@ def filter_results_by_keywords(
     keywords: List[str]
 ) -> List[Dict[str, Any]]:
     """
-    Filter results based on the presence of keywords in the 'descriptionByte' field.
+    Filter results based on the presence or absence of keywords in the 'descriptionByte' field.
+    If a keyword starts with '!', exclude results containing that keyword.
     
     Args:
         results: List of API results to filter
-        keywords: List of keywords to search for
+        keywords: List of keywords to search for (prefix '!' to exclude)
         
     Returns:
-        Filtered list of results containing at least one keyword
+        Filtered list of results
     """
     if not keywords:
         return results
+
+    include_keywords = [k.lower() for k in keywords if not k.startswith("!")]
+    exclude_keywords = [k[1:].lower() for k in keywords if k.startswith("!")]
 
     filtered: List[Dict[str, Any]] = []
     for result in results:
         metadata = result.get("metadata", {})
         description = metadata.get("descriptionByte")
-        
+
         if description is None:
             filtered.append(result)
             continue
-            
+
         # Normalize description to string
         if isinstance(description, list):
             description_text = " ".join(description).lower()
         else:
             description_text = str(description).lower()
-            
-        if any(keyword.lower() in description_text for keyword in keywords):
+
+        # Exclude if any exclude keyword is present
+        if any(ex_kw in description_text for ex_kw in exclude_keywords):
+            continue
+
+        # If include keywords are specified, include only if at least one is present
+        if include_keywords:
+            if any(in_kw in description_text for in_kw in include_keywords):
+                filtered.append(result)
+        else:
+            # No include keywords, so include all that passed the exclude filter
             filtered.append(result)
-            
+
     return filtered
 
 
@@ -205,7 +218,8 @@ async def fetch_all_calls(alert: Dict[str, Any]) -> Optional[List[Dict[str, Any]
             return [
                 {
                     "reference": result.get("reference"),
-                    "identifier": result.get("metadata", {}).get("identifier")
+                    "identifier": result.get("metadata", {}).get("identifier"),
+                    "page": page # temporary for debugging
                 }
                 for result in filtered_results
                 if result.get("reference") and result.get("metadata", {}).get("identifier")
@@ -227,6 +241,17 @@ async def fetch_all_calls(alert: Dict[str, Any]) -> Optional[List[Dict[str, Any]
     # Combine all page results
     for page_results in pages_results:
         all_refs.extend(page_results)
+
+    # vérification pour vérifier si des références sont en double
+    unique_refs = {ref["reference"]: ref for ref in all_refs}
+    
+    logger.info(f"Fetched {len(unique_refs)} unique references. total: {len(all_refs)}")
+    if len(unique_refs) != len(all_refs):
+        # print page number of the duplicates
+        duplicates = {ref["reference"]: ref for ref in all_refs if ref["reference"] not in unique_refs}
+        logger.warning(f"Duplicate references found: {duplicates}")
+        logger.warning("Duplicate references found. Keeping only unique ones.")
+        all_refs = list(unique_refs.values())
 
     # Pause to avoid API saturation
     await asyncio.sleep(1)
