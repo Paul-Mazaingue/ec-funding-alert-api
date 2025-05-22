@@ -440,7 +440,18 @@ def _extract_call_details(result: Dict[str, Any], identifier: str) -> Dict[str, 
         "url": full_url,
         "identifier": identifier,
         "reference": result.get("reference"),
-        "summary": result.get("summary")
+        "summary": result.get("summary"),
+        "keywords": metadata.get("keywords"),
+        "destination": get_value_from_rawValue(_get_first_value(metadata.get("destination")), "destination"),
+        "focusArea": get_value_from_rawValue(_get_first_value(metadata.get("focusArea")), "focusArea"),
+        "destinationDetails": metadata.get("destinationDetails"),
+        "destinationGroup": get_value_from_rawValue(_get_first_value(metadata.get("destinationGroup")), "destinationGroup"),
+        "callTitle": metadata.get("callTitle"),
+        "descriptionByte": metadata.get("descriptionByte"),
+        "programmeDivision": get_value_from_rawValue(_get_first_value(metadata.get("programmeDivision")), "programmeDivision"),
+        "crossCuttingPriorities": metadata.get("crossCuttingPriorities"),
+        "typesOfAction": metadata.get("typesOfAction"),
+        "tags": metadata.get("tags")
     }
 
 
