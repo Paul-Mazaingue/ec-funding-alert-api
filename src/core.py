@@ -114,6 +114,8 @@ async def periodic_checker() -> None:
                     except Exception as e:
                         logging.error(f"Error checking alert '{alert_name}': {str(e)}", exc_info=True)
                     
+                    _check_updated(alert_name)
+
                     # Update the last checked time
                     last_checked[alert_name] = current_time
             
