@@ -1,17 +1,68 @@
 <div class="space-y-6">
   <h2 class="text-2xl font-bold text-blue-700 mb-4">Dernières alertes</h2>
-  <ul class="space-y-4">
+  
+  {% if clusters_data %}
+  <div class="mb-4">
+    <select id="cluster-filter" class="bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto">
+      <option value="all">Tous les groupes ({{ alert.details|length }}) </option>
+      {% for cluster in clusters_data.clusters %}
+        <option value="{{ cluster.cluster_id }}">{{ cluster.generated_title }} ({{ cluster.size }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  
+  <ul class="space-y-4" id="alert-list">
     {% if alert.details and alert.details|length > 0 %}
       {% for detail in alert.details %}
-        <li class="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition">
+        <li class="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition alert-item" data-cluster="{{ detail.cluster }}">
           <span class="text-gray-700">
-            Détecté le: <strong>{{ detail.retrieved_at }}</strong> <br>
+            Détecté le: <strong>{{ detail.retrieved_at }}</strong>
+              <br>
             {{ alert.message | replace('{title}', detail.title | join('')) | replace('{starting_date}', detail.starting_date) | replace('{deadline}', detail.deadline) | replace('{type}', detail.type) | replace('{status}', detail.status) | replace('{url}', '<a href="' ~ detail.url ~ '" class="text-blue-600 underline" target="_blank">' ~ detail.url ~ '</a>') | replace('{identifier}', detail.identifier) | replace('{reference}', detail.reference) | replace('{summary}', detail.summary) | replace('{frameworkProgramme}', detail.frameworkProgramme) | replace('\n', '<br>') | safe }}
           </span>
         </li>
       {% endfor %}
     {% else %}
-      <li class="bg-white p-4 rounded-lg shadow text-gray-500">Aucune alerte n'a encore été détectée.</li>
+      <li id="no-alerts" class="bg-white p-4 rounded-lg shadow text-gray-500">Aucune alerte n'a encore été détectée.</li>
     {% endif %}
   </ul>
+  
+  <div id="no-results" class="bg-white p-4 rounded-lg shadow text-gray-500 hidden">
+    Aucune alerte ne correspond au cluster sélectionné.
+  </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const clusterFilter = document.getElementById('cluster-filter');
+    const alertItems = document.querySelectorAll('.alert-item');
+    const noResults = document.getElementById('no-results');
+    const noAlerts = document.getElementById('no-alerts');
+    
+    if (clusterFilter) {
+      clusterFilter.addEventListener('change', function() {
+        const selectedCluster = this.value;
+        let visibleCount = 0;
+        
+        alertItems.forEach(item => {
+          const itemCluster = item.getAttribute('data-cluster');
+          
+          if (selectedCluster === 'all' || selectedCluster === itemCluster) {
+            item.classList.remove('hidden');
+            visibleCount++;
+          } else {
+            item.classList.add('hidden');
+          }
+        });
+        
+        // Show "no results" message if no items match the filter
+        if (visibleCount === 0 && alertItems.length > 0) {
+          noResults.classList.remove('hidden');
+        } else {
+          noResults.classList.add('hidden');
+        }
+      });
+    }
+  });
+</script>

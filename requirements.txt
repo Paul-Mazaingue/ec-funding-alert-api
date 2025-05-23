@@ -6,3 +6,7 @@ requests
 python-multipart
 aiohttp
 dotenv
+pandas
+sentence-transformers
+umap-learn
+scikit-learn

@@ -9,6 +9,7 @@ from .fetch import fetch_all_calls, get_detailed_info, get_total_results
 from .mail import send_email_alert
 from .utils import load_json, save_json
 from .facet import request_facet_api
+from .clustering import cluster_alert
 
 # Configuration constants
 CONFIG_PATH = "config/config.json"
@@ -107,9 +108,19 @@ async def periodic_checker() -> None:
                                 _update_and_save_alert(alerts, alert_name, details)
                                 email_subject = f"Nouveaux résultats : {alert_name}"
                                 send_email_alert(details, alert.get("message"), alert.get("emails"), email_subject)
-                        
+
                             # Save the updated alert with totalResults
                             _update_alert_total_results(alerts, alert_name, total_results)
+
+                        # Vérifie que tous les détails dans lastDetails ont un champ "cluster"
+                        last_details = alert.get("lastDetails", [])
+                        all_have_cluster = all("cluster" in d for d in last_details)
+                        if not all_have_cluster:  # Exécuter le clustering si au moins un élément n'a pas de cluster
+                            logging.info(f"Clustering des résultats pour l'alerte '{alert_name}'")
+                            size = len(last_details)
+                            nb_clusters = min(max(1, size // 10), 10)
+                            await cluster_alert(alert_name, nb_clusters)
+
                         
                     except Exception as e:
                         logging.error(f"Error checking alert '{alert_name}': {str(e)}", exc_info=True)

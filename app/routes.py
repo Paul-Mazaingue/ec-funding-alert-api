@@ -37,12 +37,21 @@ async def dashboard(request: Request, alert: Optional[str] = None):
         current_alert_name = "default"
     alert_config, available_query = load_config(current_alert_name)
 
+    clusters = load_json(f"{DATA_FOLDER}/clusters.json")
+    # Récupérer les données de cluster correspondant au nom de l'alerte
+    clusters_data = None
+    for cluster_entry in clusters:
+        if current_alert_name in cluster_entry:
+            clusters_data = cluster_entry[current_alert_name]
+            break
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "alert": alert_config,
         "available_query": available_query,
         "alerts": all_alerts,
-        "current_alert": current_alert_name
+        "current_alert": current_alert_name,
+        "clusters_data": clusters_data
     })
 
 @router.get("/delete-alert", response_class=RedirectResponse)

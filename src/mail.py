@@ -24,7 +24,6 @@ SMTP_PORT: int = 465
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 MAX_EMAIL_BODY_SIZE = 10000  # Taille maximale en caractères (ajuste si besoin)
 
 def format_alert_message(result: Dict[str, Any], template: str) -> str:
