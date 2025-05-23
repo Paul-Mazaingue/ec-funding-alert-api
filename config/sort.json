@@ -6,5 +6,17 @@
     {
         "field": "identifier",
         "order": "ASC"
+    },
+    {
+        "field": "startDate",
+        "order": "ASC"
+    },
+    {
+        "field":"deadlineDate",
+        "order": "ASC"
+    },
+    {
+        "field": "sortStatus",
+        "order": "ASC"
     }
 ]

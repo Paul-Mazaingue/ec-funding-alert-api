@@ -248,7 +248,10 @@ async def fetch_all_calls(alert: Dict[str, Any]) -> Optional[List[Dict[str, Any]
     logger.info(f"Fetched {len(unique_refs)} unique references. total: {len(all_refs)}")
     if len(unique_refs) != len(all_refs):
         # print page number of the duplicates
-        duplicates = {ref["reference"]: ref for ref in all_refs if ref["reference"] not in unique_refs}
+        duplicates = []
+        for ref in all_refs: 
+            if all_refs.count(ref) > 1:
+                duplicates.append(ref["page"])
         logger.warning(f"Duplicate references found: {duplicates}")
         logger.warning("Duplicate references found. Keeping only unique ones.")
         all_refs = list(unique_refs.values())
