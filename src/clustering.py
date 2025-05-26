@@ -217,6 +217,8 @@ def generate_title(top_terms):
     except:
         return "Unlabeled Cluster"
 
+    logging.info(f"Terms for cluster: {terms}")
+
     # Filtrage plus intelligent : on garde le mot si...
     filtered_terms = []
     for t in terms:
@@ -232,6 +234,8 @@ def generate_title(top_terms):
                 filtered_terms.append(t)
         except:
             continue
+
+    logging.info(f"Filtered terms: {filtered_terms}")
 
     if not filtered_terms:
         return "Unlabeled Cluster"
