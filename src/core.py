@@ -202,7 +202,6 @@ def _ensure_query_file_exists(alert: Dict[str, Any]) -> bool:
     Returns True if the file exists and is identical to the alert's query, False otherwise.
     """
     file_path = alert.get("file_paths", {}).get("query")
-    print("File path:", file_path)
     if file_path:
         query_in_alert = alert.get("query")
         if not os.path.exists(file_path):

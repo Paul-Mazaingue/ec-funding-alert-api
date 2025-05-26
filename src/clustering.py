@@ -205,15 +205,23 @@ def generate_title(top_terms):
     # Mots ou fragments à ignorer
     stop_phrases = {"none", "and", "the", "des", "area", "work", "topic", "open"}
 
+    # Vérifier si top_terms est None ou vide
+    if not top_terms or top_terms == "No terms found":
+        return "Unlabeled Cluster"
+        
     # Séparer les mots clés
-    terms = [t.strip() for t in top_terms.split(',')]
+    terms = [t.strip() for t in top_terms.split(',') if t and t.strip()]
 
     # Filtrage plus intelligent : on garde le mot si...
     filtered_terms = []
     for t in terms:
-        if t.lower() in important_terms:
+        if not t or pd.isna(t):
+            continue
+        
+        t_lower = str(t).lower()
+        if t_lower in important_terms:
             filtered_terms.append(t)
-        elif all(word not in stop_phrases for word in t.lower().split()) and len(t) > 2:
+        elif all(word not in stop_phrases for word in t_lower.split()) and len(t_lower) > 2:
             filtered_terms.append(t)
 
     if not filtered_terms:
