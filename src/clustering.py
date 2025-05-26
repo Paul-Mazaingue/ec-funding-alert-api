@@ -46,6 +46,10 @@ async def cluster_alert(alertName: str, n_clusters: int = 10):
 
     # Clean the data
     df['clean_text'] = df.apply(build_text, axis=1)
+    # enregistrer clean_text dans un fichier txt
+    with open(f'{alertName}_clean_text.txt', 'w', encoding='utf-8') as f:
+        for text in df['clean_text'].tolist():
+            f.write(text + '\n')
 
     # Embeddings
     model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
@@ -189,6 +193,29 @@ def build_text(row):
     else:
         parts.append(str(call_title))
     
+    # Handle destinationDetails - peut contenir du texte riche en HTML
+    dest_details = row.get('destinationDetails')
+    if dest_details is not None:
+        if isinstance(dest_details, list) and len(dest_details) > 0:
+            # Nettoyer les balises HTML
+            cleaned_dest = " ".join([strip_html(str(detail)) for detail in dest_details])
+            parts.append(cleaned_dest)
+        elif isinstance(dest_details, str):
+            parts.append(strip_html(dest_details))
+    
+    # Handle descriptionByte
+    descriptionByte = row.get('descriptionByte')
+    if descriptionByte is not None:
+        if isinstance(descriptionByte, dict):
+            # Supprimer tout ce qui se trouve entre '<' et '>' (balises HTML)
+            cleaned_details = re.sub(r'<[^<]+?>', ' ', str(descriptionByte))
+            parts.append(cleaned_details)
+        elif isinstance(descriptionByte, list) and len(descriptionByte) > 0:
+            # Si c'est une liste, traiter chaque élément
+            parts.append(" ".join([str(detail) for detail in descriptionByte]))
+        else:
+            parts.append(str(descriptionByte))
+    
     return strip_html(" ".join(parts))
 
 def top_terms(c, df, tfidf_matrix, terms):
@@ -196,8 +223,6 @@ def top_terms(c, df, tfidf_matrix, terms):
     if idx.sum() == 0:
         logging.warning(f"Cluster {c}: Aucun élément trouvé dans le cluster")
         return "No terms found"
-    
-    logging.info(f"Cluster {c}: {idx.sum()} éléments")
     
     # Calcul de la moyenne des vecteurs TF-IDF pour ce cluster
     sub = tfidf_matrix[idx].mean(axis=0).A1
@@ -210,9 +235,6 @@ def top_terms(c, df, tfidf_matrix, terms):
     term_scores = {terms[i]: score for i, score in enumerate(sub) 
                    if i in [idx for idx, _ in valid_terms] and not pd.isna(score)}
     
-    # Log après filtrage
-    logging.info(f"Cluster {c}: {len(term_scores)} termes après filtrage des NaN")
-    
     # Si tous les termes sont nuls ou 'nan', retourner une indication claire
     if not term_scores:
         logging.warning(f"Cluster {c}: Aucun terme significatif trouvé après filtrage")
@@ -220,13 +242,11 @@ def top_terms(c, df, tfidf_matrix, terms):
     
     # Trier par score et prendre les 3 meilleurs
     top_terms_list = sorted(term_scores.items(), key=lambda x: x[1], reverse=True)[:3]
-    logging.info(f"Cluster {c}: Top 3 termes avec scores: {top_terms_list}")
-    
+
     # Extraire seulement les termes (pas les scores)
     top_terms = [term for term, _ in top_terms_list]
     
     result = ", ".join(top_terms)
-    logging.info(f"Cluster {c}: Termes finaux: {result}")
     
     return result
 
