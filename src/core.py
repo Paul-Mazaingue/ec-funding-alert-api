@@ -116,10 +116,11 @@ async def periodic_checker() -> None:
                         last_details = alert.get("lastDetails", [])
                         all_have_cluster = all("cluster" in d for d in last_details)
                         if not all_have_cluster:  # Exécuter le clustering si au moins un élément n'a pas de cluster
-                            logging.info(f"Clustering des résultats pour l'alerte '{alert_name}'")
+                            logging.info(f"Démarrage du clustering en arrière-plan pour l'alerte '{alert_name}'")
                             size = len(last_details)
                             nb_clusters = min(max(1, size // 10), 10)
-                            await cluster_alert(alert_name, nb_clusters)
+                            # Lancer le clustering dans une tâche de fond pour ne pas bloquer le serveur
+                            asyncio.create_task(cluster_alert(alert_name, nb_clusters))
 
                         
                     except Exception as e:
