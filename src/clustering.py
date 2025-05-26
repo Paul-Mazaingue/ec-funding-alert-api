@@ -206,32 +206,45 @@ def generate_title(top_terms):
     stop_phrases = {"none", "and", "the", "des", "area", "work", "topic", "open"}
 
     # Vérifier si top_terms est None ou vide
-    if not top_terms or top_terms == "No terms found":
+    if not top_terms or top_terms == "No terms found" or pd.isna(top_terms):
         return "Unlabeled Cluster"
         
     # Séparer les mots clés
-    terms = [t.strip() for t in top_terms.split(',') if t and t.strip()]
+    try:
+        terms = [t.strip() for t in str(top_terms).split(',') if t and t.strip()]
+    except:
+        return "Unlabeled Cluster"
 
     # Filtrage plus intelligent : on garde le mot si...
     filtered_terms = []
     for t in terms:
-        if not t or pd.isna(t):
+        # Gérer explicitement les valeurs None et NaN
+        if t is None or pd.isna(t) or not t:
             continue
         
-        t_lower = str(t).lower()
-        if t_lower in important_terms:
-            filtered_terms.append(t)
-        elif all(word not in stop_phrases for word in t_lower.split()) and len(t_lower) > 2:
-            filtered_terms.append(t)
+        try:
+            t_lower = str(t).lower()
+            if t_lower in important_terms:
+                filtered_terms.append(t)
+            elif all(word not in stop_phrases for word in t_lower.split()) and len(t_lower) > 2:
+                filtered_terms.append(t)
+        except:
+            continue
 
     if not filtered_terms:
         return "Unlabeled Cluster"
 
-    # Construction du titre à partir des termes filtrés
-    if len(filtered_terms) >= 2:
-        return f"{filtered_terms[0].capitalize()} & {filtered_terms[1].capitalize()}" + (f" ({filtered_terms[2].upper()}-related)" if len(filtered_terms) > 2 else "")
-    else:
-        return filtered_terms[0].capitalize()
+    # Construction du titre à partir des termes filtrés, avec gestion des cas d'erreur
+    try:
+        if len(filtered_terms) >= 2:
+            title = f"{filtered_terms[0].capitalize()} & {filtered_terms[1].capitalize()}"
+            if len(filtered_terms) > 2:
+                title += f" ({filtered_terms[2].upper()}-related)"
+            return title
+        else:
+            return filtered_terms[0].capitalize()
+    except:
+        return "Unlabeled Cluster"
 
 # Custom JSON encoder to handle numpy types
 class NumpyEncoder(json.JSONEncoder):
