@@ -35,7 +35,7 @@ custom_stopwords = list(ENGLISH_STOP_WORDS) + [
 
     # mots clés détecté lors de l'annalyse des mot clés dominants
     "area", "work", "open", "topic", "direct", "europe", "forward", "infra", "ir", 
-    "ju", "selection", "partners","carry","activities" 
+    "ju", "selection", "partners","carry","activities", "nan"
 ]
 
 async def cluster_alert(alertName: str, n_clusters: int = 10):
@@ -202,22 +202,13 @@ def top_terms(c, df, tfidf_matrix, terms):
     # Calcul de la moyenne des vecteurs TF-IDF pour ce cluster
     sub = tfidf_matrix[idx].mean(axis=0).A1
     
-    # Log des statistiques sur le vecteur moyen
-    logging.info(f"Cluster {c}: Taille du vecteur moyen: {len(sub)}")
-    logging.info(f"Cluster {c}: Nombre de NaN dans le vecteur: {np.isnan(sub).sum()}")
-    logging.info(f"Cluster {c}: Min score: {np.nanmin(sub)}, Max score: {np.nanmax(sub)}")
+    # Filtrer explicitement les termes contenant "nan" avant de créer term_scores
+    valid_terms = [(i, term) for i, term in enumerate(terms) 
+                  if "nan" not in term.lower()]
     
-    # Analyse des termes avant filtrage
-    nan_terms_count = sum(1 for t in terms if t.lower() == "nan")
-    logging.info(f"Cluster {c}: Nombre de termes 'nan' dans les features: {nan_terms_count}")
-    
-    # Échantillon des termes et scores avant filtrage
-    sample_indices = np.random.choice(len(sub), min(10, len(sub)), replace=False)
-    for i in sample_indices:
-        logging.debug(f"Cluster {c}: Exemple - Terme: '{terms[i]}', Score: {sub[i]}")
-    
-    # Créer un dictionnaire terme -> score pour pouvoir filtrer
-    term_scores = {terms[i]: score for i, score in enumerate(sub) if not pd.isna(score) and terms[i].lower() != "nan"}
+    # Créer un dictionnaire terme -> score pour les termes valides uniquement
+    term_scores = {terms[i]: score for i, score in enumerate(sub) 
+                   if i in [idx for idx, _ in valid_terms] and not pd.isna(score)}
     
     # Log après filtrage
     logging.info(f"Cluster {c}: {len(term_scores)} termes après filtrage des NaN")
@@ -234,36 +225,27 @@ def top_terms(c, df, tfidf_matrix, terms):
     # Extraire seulement les termes (pas les scores)
     top_terms = [term for term, _ in top_terms_list]
     
-    # Vérifier si l'un des top termes contient "nan"
-    nan_top_terms = [t for t in top_terms if "nan" in t.lower()]
-    if nan_top_terms:
-        logging.warning(f"Cluster {c}: Termes contenant 'nan' après triage: {nan_top_terms}")
-    
-    # Vérifier qu'on a des termes et qu'ils ne sont pas tous 'nan'
-    if not top_terms or all(term.lower() == 'nan' for term in top_terms):
-        logging.warning(f"Cluster {c}: Tous les top termes sont vides ou 'nan'")
-        return "No significant terms found"
-    
     result = ", ".join(top_terms)
     logging.info(f"Cluster {c}: Termes finaux: {result}")
     
     return result
-
 
 def generate_title(top_terms):
     # Liste des termes à ne jamais filtrer
     important_terms = {"ai", "sns", "sesar", "efsa", "era", "widera", "cl6", "cl4", "cl3", "life", "soil"}
 
     # Mots ou fragments à ignorer
-    stop_phrases = {"none", "and", "the", "des", "area", "work", "topic", "open"}
+    stop_phrases = {"none", "and", "the", "des", "area", "work", "topic", "open", "nan"}
 
     # Vérifier si top_terms est None ou vide
-    if not top_terms or top_terms == "No terms found" or pd.isna(top_terms):
+    if not top_terms or top_terms == "No terms found" or pd.isna(top_terms) or top_terms == "No significant terms found":
         return "Unlabeled Cluster"
         
     # Séparer les mots clés
     try:
-        terms = [t.strip() for t in str(top_terms).split(',') if t and t.strip()]
+        terms = [t.strip() for t in str(top_terms).split(',') if t and t.strip() and "nan" not in t.lower()]
+        if not terms:
+            return "Unlabeled Cluster"
     except:
         return "Unlabeled Cluster"
 
@@ -271,7 +253,7 @@ def generate_title(top_terms):
     filtered_terms = []
     for t in terms:
         # Gérer explicitement les valeurs None et NaN
-        if t is None or pd.isna(t) or not t:
+        if t is None or pd.isna(t) or not t or "nan" in t.lower():
             continue
         
         try:
