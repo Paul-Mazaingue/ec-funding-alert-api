@@ -107,6 +107,8 @@ def save_cluster_details(df, labels, n_clusters, tfidf_matrix, terms, alertName)
             'top_terms': top_terms(c, df, tfidf_matrix, terms),
             'generated_title': generate_title(top_terms(c, df, tfidf_matrix, terms))
         })
+        print(f"Cluster {c}: {alert_data['clusters'][-1]['size']} records, Top terms: {alert_data['clusters'][-1]['top_terms']}")
+        print(f"Generated title: {alert_data['clusters'][-1]['generated_title']}")
     
     # Ajouter les données d'alerte au tableau de clusters
     clusters.append({alertName: alert_data})
