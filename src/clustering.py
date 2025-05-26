@@ -195,9 +195,27 @@ def top_terms(c, df, tfidf_matrix, terms):
     idx = (df['cluster'] == c).values
     if idx.sum() == 0:
         return "No terms found"
+    
     sub = tfidf_matrix[idx].mean(axis=0).A1
-    top = sub.argsort()[-3:][::-1]
-    return ", ".join(terms[t] for t in top)
+    
+    # Créer un dictionnaire terme -> score pour pouvoir filtrer
+    term_scores = {terms[i]: score for i, score in enumerate(sub) if not pd.isna(score) and terms[i].lower() != "nan"}
+    
+    # Si tous les termes sont nuls ou 'nan', retourner une indication claire
+    if not term_scores:
+        return "No significant terms found"
+    
+    # Trier par score et prendre les 3 meilleurs
+    top_terms_list = sorted(term_scores.items(), key=lambda x: x[1], reverse=True)[:3]
+    
+    # Extraire seulement les termes (pas les scores)
+    top_terms = [term for term, _ in top_terms_list]
+    
+    # Vérifier qu'on a des termes et qu'ils ne sont pas tous 'nan'
+    if not top_terms or all(term.lower() == 'nan' for term in top_terms):
+        return "No significant terms found"
+    
+    return ", ".join(top_terms)
 
 
 def generate_title(top_terms):
@@ -217,8 +235,6 @@ def generate_title(top_terms):
     except:
         return "Unlabeled Cluster"
 
-    logging.info(f"Terms for cluster: {terms}")
-
     # Filtrage plus intelligent : on garde le mot si...
     filtered_terms = []
     for t in terms:
@@ -234,8 +250,6 @@ def generate_title(top_terms):
                 filtered_terms.append(t)
         except:
             continue
-
-    logging.info(f"Filtered terms: {filtered_terms}")
 
     if not filtered_terms:
         return "Unlabeled Cluster"
